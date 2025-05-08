@@ -167,8 +167,8 @@
     }).addTo(map);
 
     Promise.all([
-      fetch('data/ontario_fsa_with_npop_count_4326.json'),
-      fetch('data/quebec_fsa_with_npop_count_4326.json')
+      fetch('./data/ontario_fsa_with_npop_count_4326.json'),
+      fetch('./data/quebec_fsa_with_npop_count_4326.json')
     ])
     .then(([ont, que]) => {
       console.log('ontario:', ont.features.length, ont);
