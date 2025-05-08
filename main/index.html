@@ -43,7 +43,7 @@
     const markers = L.markerClusterGroup();
 
     // 5. Load CSV, create clusters & heat points
-    Papa.parse('./npop_points.csv', {
+    Papa.parse('./data/npop_points.csv', {
       header: true,
       download: true,
       complete: ({ data }) => {
