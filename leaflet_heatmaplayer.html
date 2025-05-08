@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Leaflet – OSM & Satellite + CSV Clustering & Heatmap</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+  <style> html, body, #map { height: 100%; margin: 0; padding: 0; } </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet core JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Heatmap plugin -->
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <!-- CSV parser -->
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <!-- MarkerCluster plugin -->
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    // 1. Initialize the map
+    const map = L.map('map').setView([43.7, -79.4], 10);
+
+    // 2. Base layers
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
+    const satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri & contributors', maxZoom: 19
+    });
+    osm.addTo(map);
+    L.control.layers({ "OSM": osm, "Satellite": satellite }).addTo(map);
+
+    // 3. Heatmap setup
+    let heatPoints = [];
+    let heatLayer = null;
+    const heatmapThresholdZoom = 13;
+
+    // 4. MarkerCluster group
+    const markers = L.markerClusterGroup();
+
+    // 5. Load CSV, create clusters & heat points
+    Papa.parse('./npop_points.csv', {
+      header: true,
+      download: true,
+      complete: ({ data }) => {
+        data.forEach(row => {
+          const lat = parseFloat(row.y);
+          const lon = parseFloat(row.x);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            const marker = L.marker([lat, lon])
+              .bindPopup(
+                `<strong>${row.short_add || 'n/a'}</strong><br>n_pop_id: ${row.n_pop_id || 'n/a'}`
+              );
+            markers.addLayer(marker);
+            heatPoints.push([lat, lon, 1]);
+          }
+        });
+        map.addLayer(markers);
+        createHeatmap();
+      }
+    });
+
+    // 6. Create or refresh heatmap
+    function createHeatmap() {
+      if (heatLayer) { map.removeLayer(heatLayer); }
+      heatLayer = L.heatLayer(heatPoints, {
+        radius: 75,
+        blur: 15,
+        maxZoom: 17,
+        max: 2,
+        minOpacity: 0.1,
+        gradient: { 0.1: 'blue', 0.2: 'lime', 0.3: 'yellow', 0.6: 'red' }
+      });
+      if (map.getZoom() <= heatmapThresholdZoom) {
+        heatLayer.addTo(map);
+      }
+    }
+
+    // 7. Toggle heatmap on zoom events
+    map.on('zoomend', () => {
+      if (map.getZoom() > heatmapThresholdZoom) {
+        if (heatLayer && map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+      } else {
+        if (heatLayer && !map.hasLayer(heatLayer)) heatLayer.addTo(map);
+      }
+    });
+  </script>
+</body>
+</html>

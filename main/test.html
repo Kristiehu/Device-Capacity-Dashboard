@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Map with Multiple Polygon Layers and Satellite Basemap</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <style>
+    #map { height: 600px; }
+  </style>
+</head>
+<body>
+  <h3>Leaflet Map with Polygon GeoJSON Layers & Satellite Basemap</h3>
+  <div id="map"></div>
+
+  <script>
+    const map = L.map('map').setView([43.7, -79.4], 10);
+
+    // Base Layers
+    const osmBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const satelliteBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri'
+    });
+
+    const baseMaps = {
+      "OpenStreetMap": osmBase,
+      "Satellite": satelliteBase
+    };
+
+    // GeoJSON Layers
+    const polygonLayer1 = omnivore.geojson('data/npops_buildings.json')
+      .on('ready', function() {
+        map.fitBounds(polygonLayer1.getBounds());
+      });
+
+    const polygonLayer2 = omnivore.geojson('data/ontario_fsa_with_npop_count.geojson');
+
+    const overlayMaps = {
+      "Polygon Layer 1": polygonLayer1,
+      "Polygon Layer 2": polygonLayer2
+    };
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+  </script>
+</body>
+</html>
