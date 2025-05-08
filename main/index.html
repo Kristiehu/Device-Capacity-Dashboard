@@ -54,7 +54,9 @@
           if (!isNaN(lat) && !isNaN(lon)) {
             const marker = L.marker([lat, lon])
               .bindPopup(
-                `<strong>${row.short_add || 'n/a'}</strong><br>n_pop_id: ${row.n_pop_id || 'n/a'}`
+                `<strong>${row.name || 'n/a'}</strong><br>
+                <i>${row.address || 'n/a'}</i><br>
+                city: ${row.city || 'n/a'}`
               );
             markers.addLayer(marker);
             heatPoints.push([lat, lon, 1]);
