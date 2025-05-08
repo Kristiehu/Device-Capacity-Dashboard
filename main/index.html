@@ -167,35 +167,50 @@
     }).addTo(map);
 
     Promise.all([
-      fetch('./data/ontario_fsa_with_npop_count_4326.json'),
-      fetch('./data/quebec_fsa_with_npop_count_4326.json')
-    ])
-    .then(([ont, que]) => {
-      console.log('ontario:', ont.features.length, ont);
-      console.log('quebec:', que.features.length, que);
-      fsasLayer.addData(ont);
-      fsasLayer.addData(que);
+  fetch('./data/ontario_fsa_with_npop_count_4326.json')
+    .then(res => {
+      if (!res.ok) throw new Error(`Ontario FSA load failed: ${res.status}`);
+      return res.json();
+    }),
+  fetch('./data/quebec_fsa_with_npop_count_4326.json')
+    .then(res => {
+      if (!res.ok) throw new Error(`Quebec FSA load failed: ${res.status}`);
+      return res.json();
     })
-    .catch(e=>console.error(e));
+])
+.then(([ont, que]) => {
+  console.log('Ontario features:', ont.features.length, ont);
+  console.log('Quebec features:', que.features.length, que);
+  fsasLayer.addData(ont);   // you can also do .addData(ont.features)
+  fsasLayer.addData(que);
+  // optional: zoom to show all FSAs
+  // map.fitBounds(fsasLayer.getBounds());
+})
+.catch(err => console.error('Error loading FSA layers:', err));
 
+// 4) LOAD BUILDING LAYER WITH CLICK
+fetch('./data/npop_buildings.json')
+  .then(res => {
+    if (!res.ok) throw new Error(`Buildings load failed: ${res.status}`);
+    return res.json();
+  })
+  .then(buildingData => {
+    L.geoJSON(buildingData, {
+      style: { color: '#ff7800', weight: 2, opacity: 0.8 },
+      onEachFeature: (feat, layer) => {
+        layer.on('click', () => {
+          const p = feat.properties;
+          updateBuildingReport(`
+            <strong>${p.name || 'n/a'}</strong><br>
+            ${p.entityId || 'n/a'}<br>
+            ${p.description || 'n/a'}
+          `);
+        });
+      }
+    }).addTo(map);
+  })
+  .catch(err => console.error('Error loading buildings GeoJSON:', err));
 
-    // 4) LOAD BUILDING LAYER WITH CLICK
-    fetch('./data/npop_buildings.json')
-      .then(data => {
-        L.geoJSON(data, {
-          style: { color: '#ff7800', weight: 2, opacity: 0.8 },
-          onEachFeature: (feat, layer) => {
-            layer.on('click', () => {
-              const p = feat.properties;
-              updateBuildingReport(`
-                <strong>${p.name||'n/a'}</strong><br>
-                ${p.entityId||'n/a'}<br>
-                ${p.description||'n/a'}
-              `);
-            });
-          }
-        }).addTo(map);
-      });
   </script>
 </body>
 </html>
