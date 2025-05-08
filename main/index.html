@@ -8,7 +8,37 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
   <style> html, body, #map { height: 100%; margin: 0; padding: 0; } </style>
+  <style>
+    .fsaCluster { margin-bottom: 10px; }
+    .buildingCluster {
+      margin-bottom: 12px;
+      background: rgba(247,250,255,0.7);
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(51,136,255,0.08);
+      padding: 10px 14px;
+      border-left: 4px solid #3388ff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      color: #234;
+      transition: box-shadow 0.2s;
+    }
+    .buildingCluster:hover {
+      box-shadow: 0 4px 16px rgba(51,136,255,0.18);
+      background: rgba(234,243,255,0.85);
+    }
+    .reportCluster {
+      background: rgba(255,255,255,0.7);
+      padding: 8px;
+      border-radius: 4px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.15);
+      font-family: sans-serif;
+      line-height: 1.4;
+      width: 200px;
+      backdrop-filter: blur(2px);
+    }
+  </style>
 </head>
+  
 <body>
   <div id="map"></div>
 
@@ -90,6 +120,82 @@
         if (heatLayer && !map.hasLayer(heatLayer)) heatLayer.addTo(map);
       }
     });
+
+    // 8. Report cluster section
+      // --- GEOJSON LAYER LOADER ---
+   // 1) CREATE FSA HOVER BOX
+   const defaultFsaMsg = 'Hover over an area to see NPOP count / FSA.';
+    const fsaControl = L.control({ position: 'topright' });
+    fsaControl.onAdd = () => {
+      const d = L.DomUtil.create('div', 'reportCluster fsaCluster');
+      d.innerHTML = defaultFsaMsg;
+      return d;
+    };
+    fsaControl.addTo(map);
+    function updateFsaReport(html) {
+      fsaControl._div.innerHTML = html;
+    }
+
+    // 2) CREATE BUILDING CLICK BOX
+    const defaultBldgMsg = 'Click a building for details.';
+    const bldgControl = L.control({ position: 'topright' });
+    bldgControl.onAdd = () => {
+      const d = L.DomUtil.create('div', 'reportCluster buildingCluster');
+      d.innerHTML = defaultBldgMsg;
+      return d;
+    };
+    bldgControl.addTo(map);
+    function updateBuildingReport(html) {
+      bldgControl._div.innerHTML = html;
+    }
+
+    // 3) LOAD FSA LAYER WITH MOUSEOVER/MOUSEOUT
+    function renderFsaInfo(p) {
+      return `
+        <strong>${p.PRNAME} – <i>${p.CFSAUID||'n/a'}</i></strong><br>
+        DGUID: ${p.DGUID||'n/a'}<br>
+        Land area: ${p.LANDAREA||'—'}<br>
+        NPOP Count: <strong>${p.npop_count||'n/a'}</strong>
+      `;
+    }
+    const fsasLayer = L.geoJSON(null, {
+      style: { color: '#3388ff', weight: 2, opacity: 0.6 },
+      onEachFeature(feat, layer) {
+        layer.on('mouseover', () => updateFsaReport(renderFsaInfo(feat.properties)));
+        layer.on('mouseout',  () => updateFsaReport(defaultFsaMsg));
+      }
+    }).addTo(map);
+
+    Promise.all([
+      fetch('data/ontario_fsa_with_npop_count_4326.json'),
+      fetch('data/quebec_fsa_with_npop_count_4326.json')
+    ])
+    .then(([ont, que]) => {
+      console.log('ontario:', ont.features.length, ont);
+      console.log('quebec:', que.features.length, que);
+      fsasLayer.addData(ont);
+      fsasLayer.addData(que);
+    })
+    .catch(e=>console.error(e));
+
+
+    // 4) LOAD BUILDING LAYER WITH CLICK
+    fetch('./data/npop_buildings.json')
+      .then(data => {
+        L.geoJSON(data, {
+          style: { color: '#ff7800', weight: 2, opacity: 0.8 },
+          onEachFeature: (feat, layer) => {
+            layer.on('click', () => {
+              const p = feat.properties;
+              updateBuildingReport(`
+                <strong>${p.name||'n/a'}</strong><br>
+                ${p.entityId||'n/a'}<br>
+                ${p.description||'n/a'}
+              `);
+            });
+          }
+        }).addTo(map);
+      });
   </script>
 </body>
 </html>
