@@ -46,6 +46,7 @@
     Papa.parse('./data/npop_points.csv', {
       header: true,
       download: true,
+      error: err => console.error('CSV load error:', err),
       complete: ({ data }) => {
         data.forEach(row => {
           const lat = parseFloat(row.y);
