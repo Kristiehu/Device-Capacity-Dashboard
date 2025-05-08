@@ -1,0 +1,66 @@
+name,address,short_add,x,y,fsa,ldu,postal_code,city,province
+Mississauga City Centre,1 City Centre Dr Mississauga ON L5B 1M2,1 City Centre Dr,-79.6394952,43.5959105,L5B,1M2,L5B 1M2,Mississauga,ON
+Toronto Southcore,1 York St Toronto ON M5J 2V5,1 York St,-79.3796083,43.641603,M5J,2V5,M5J 2V5,Toronto,ON
+Cityplace Spadina,15 Brunel Crt Toronto ON M5V 3Y6,15 Brunel Crt,-79.3933551,43.6399209,M5V,3Y6,M5V 3Y6,Toronto,ON
+75 Eglington Ave E.,75 Eglinton Ave E Toronto ON M4P 3A4,75 Eglinton Ave E,-79.39559215,43.70697103,M4P,3A4,M4P 3A4,Toronto,ON
+100 Humber College Blvd,100 Humber College Blvd Etobicoke ON M9V 5G4,100 Humber College Blvd,-79.599222,43.73139631,M9V,5G4,M9V 5G4,Etobicoke,ON
+Toronto Hanna,171 East Liberty Toronto ON M6K 3P6,171 East Liberty,-79.4181561,43.6381221,M6K,3P6,M6K 3P6,Toronto,ON
+Toronto Horner,433 Horner Ave Etobicoke ON M8W 4W3,433 Horner Ave,-79.537571,43.6006036,M8W,4W3,M8W 4W3,Etobicoke,ON
+Champagne,494 Champagne Dr Toronto ON M3J 2C6,494 Champagne Dr,-79.4753888,43.764784,M3J,2C6,M3J 2C6,Toronto,ON
+Markham Cochrane,600 Cochrane Dr Markham ON L3R 5K3,600 Cochrane Dr,-79.3656515,43.8454168,L3R,5K3,L3R 5K3,Markham,ON
+Barrie Welham,612 Welham Rd Barrie ON L4N 8Z8,612 Welham Rd,-79.6699885,44.3377384,L4N,8Z8,L4N 8Z8,Barrie,ON
+Strachan,905 King St W Toronto ON M6K 3G9,905 King St W,-79.4122746,43.6416669,M6K,3G9,M6K 3G9,Toronto,ON
+2206 Eglington Ave E.,2206 Eglinton Ave E Toronto ON M1L 4S7,2206 Eglinton Ave E,-79.27976408,43.73053229,M1L,4S7,M1L 4S7,Toronto,ON
+Matheson,2570 Matheson Blvd E Mississauga ON L4W 4Z3,2570 Matheson Blvd E,-79.6028693,43.659326,L4W,4Z3,L4W 4Z3,Mississauga,ON
+Steelestech,3389 Steeles Ave E Toronto ON M2H 3S8,3389 Steeles Ave E,-79.3440034,43.8136867,M2H,3S8,M2H 3S8,Toronto,ON
+North York Glendora,4711 Yonge St Toronto ON M2N 6K8,4711 Yonge St,-79.4100391,43.7595989,M2N,6K8,M2N 6K8,Toronto,ON
+Mississauga Millcreek,6535 Millcreek Dr Mississauga ON L5N 2M2,6535 Millcreek Dr,-79.7437555,43.5926927,L5N,2M2,L5N 2M2,Mississauga,ON
+Toronto Saint Clair,1 St Clair W Toronto ON M4V 1N6,1 St Clair W,-79.3942879,43.6877631,M4V,1N6,M4V 1N6,Toronto,ON
+Toronto Liberty Hydro Station,35 Mowat Ave Toronto ON M6K 3E9,35 Mowat Ave,-79.424795,43.6367809,M6K,3E9,M6K 3E9,Toronto,ON
+Toronto Equinix TR2,45 Parliament St Toronto ON M5A 0B2,45 Parliament St,-79.3617799,43.6508826,M5A,0B2,M5A 0B2,Toronto,ON
+Toronto Lombard,60 Adelaide St E Toronto ON M5C 3E4,60 Adelaide St E,-79.3758138,43.6511973,M5C,3E4,M5C 3E4,Toronto,ON
+Toronto Bloor,101 Bloor St W Toronto ON M5S 0A1,101 Bloor St W,-79.3913188,43.6690505,M5S,0A1,M5S 0A1,Toronto,ON
+Toronto QRC West,134 Peter St Toronto ON M5V 2H2,134 Peter St,-79.3938041,43.6485436,M5V,2H2,M5V 2H2,Toronto,ON
+151 FRONT ST W,151 Front St W Toronto ON M5J 2N1,151 Front St W,-79.38417295,43.64457423,M5J,2N1,M5J 2N1,Toronto,ON
+Etobicoke Westway,160 The Westway Etobicoke ON M9P 2C1,160 The Westway,-79.5423863,43.6891398,M9P,2C1,M9P 2C1,Etobicoke,ON
+Toronto Dundas,180 Dundas St W Toronto ON M5G 1Z8,180 Dundas St W,-79.3863756,43.6554098,M5G,1Z8,M5G 1Z8,Toronto,ON
+Toronto West Mall,185 The West Mall Toronto ON M9C 5L5,185 The West Mall,-79.558229,43.6249426,M9C,5L5,M9C 5L5,Toronto,ON
+Toronto Pearl,200 King St W Toronto ON M5H 3T4,200 King St W,-79.3857551,43.6478276,M5H,3T4,M5H 3T4,Toronto,ON
+Barrie Mapleview,222 Mapleview Dr Barrie ON L4N 9E7,222 Mapleview Dr,-79.7047538,44.3316467,L4N,9E7,L4N 9E7,Barrie,ON
+35 John St - CBC Building,250 Front W Toronto ON M5V 3G6,250 Front W,-79.3888908,43.644825,M5V,3G6,M5V 3G6,Toronto,ON
+Toronto Consumers,251 Consumers Rd Toronto ON M2J 4R3,251 Consumers Rd,-79.3305213,43.7699977,M2J,4R3,M2J 4R3,Toronto,ON
+310 Painted Post Dr,310 Painted Post Dr Scarborough ON M1G 2M3,310 Painted Post Dr,-79.22744135,43.76821315,M1G,2M3,M1G 2M3,Scarborough,ON
+Toronto Brant,425 Adelaide St W Toronto ON M5V 3C1,425 Adelaide St W,-79.3977406,43.6460984,M5V,3C1,M5V 3C1,Toronto,ON
+Toronto College Park,777 Bay St Toronto ON M5G 2C8,777 Bay St,-79.3844559,43.6604859,M5G,2C8,M5G 2C8,Toronto,ON
+960 Lawrence Ave W.,960 Lawrence Ave W North York ON M6A 3B5,960 Lawrence Ave W,-79.45747432,43.71389969,M6A,3B5,M6A 3B5,York,ON
+Toronto Junction,1655 Dupont St Toronto ON M6P 3S9,1655 Dupont St,-79.4563209,43.6641814,M6P,3S9,M6P 3S9,Toronto,ON
+FINCH POP,4168 Finch Ave E Scarborough ON M1S 5H6,4168 Finch Ave E,-79.2888924,43.8037632,M1S,5H6,M1S 5H6,Scarborough,ON
+7181 Yonge St.,7181 Yonge St Toronto ON M2N 6K8,7181 Yonge St,-79.4197539,43.80215812,M2N,6K8,M2N 6K8,Toronto,ON
+Cityplace Dan Leckie,151 Dan Leckie Way Toronto ON M5V 4B2,151 Dan Leckie Way,-79.3979467,43.6397827,M5V,4B2,M5V 4B2,Toronto,ON
+Toronto Carlaw,245 Carlaw Ave Toronto ON M4M 2S1,245 Carlaw Ave,-79.340967,43.6637918,M4M,2S1,M4M 2S1,Toronto,ON
+Wynford,18 Wynford Dr Toronto ON M3C 3S2,18 Wynford Dr,-79.3373143,43.7238577,M3C,3S2,M3C 3S2,Toronto,ON
+45 Front St E,45 Front St E Toronto ON M5E 1B3,45 Front St E,-79.37439072,43.64769311,M5E,1B3,M5E 1B3,Toronto,ON
+20 SHORE BREEZE DR,20 Shore Breeze Dr Etobicoke ON M8V 0C7,20 Shore Breeze Dr,-79.47896404,43.62350195,M8V,0C7,M8V 0C7,Etobicoke,ON
+Montreal Marie Curie (Vantage DC),,,-73.7560153,45.4867532,H9P,2W7,H9P 2W7,Dorval,QC
+Montreal Plateau,,,-73.5721795,45.5139292,H2X,1S1,H2X 1S1,Montreal,QC
+"Cologix MTL3 (Suite 500. 5th Floor, Room K)",,,-73.5704708,45.4971878,H2L,3H6,H2L 3H6,Montreal,QC
+Montreal Kirkland,,,-73.8694466,45.4457697,H9X,3V5,H9X 3V5,Baie-d'Urfé,QC
+Montreal Papineau (Bell CO),,,-73.563021,45.527694,H2W,1Y4,H2W 1Y4,Montreal,QC
+Montreal Dudemaine (Bell CO),,,-73.6989167,45.5296384,H4N,1J5,H4N 1J5,Montreal,QC
+Montreal Vieux Port,,,-73.5553399,45.5058029,H2X,1S1,H2X 1S1,Montreal,QC
+Montreal Saint-Jean (Bell CO),,,-73.8185037,45.4490675,H9X,3V5,H9X 3V5,Baie-d'Urfé,QC
+Chabanel,,,-73.6558233,45.5382506,H3N,1X9,H3N 1X9,Montreal,QC
+Montreal eStruxture MTL-1,,,-73.5620714,45.5003412,H2X,1S1,H2X 1S1,Montreal,QC
+Montreal Atwater (Bell CO),,,-73.5802275,45.4862369,H2L,3H6,H2L 3H6,Montreal,QC
+20 Place du Commerce,,,-73.53855202,45.46788244,H1Y,1E9,H1Y 1E9,Montreal,QC
+7250 Rue Mile End,,,-73.62254914,45.53156646,H3N,1X9,H3N 1X9,Montreal,QC
+Montreal Monkland (Bell CO),,,-73.6271715,45.4711576,H3N,1X9,H3N 1X9,Montreal,QC
+Pare Warehouse NPOP,,,-73.6629473,45.4907208,H3N,1X9,H3N 1X9,Montreal,QC
+Montreal Castille (Bell CO),,,-73.6217288,45.5982674,H3N,1X9,H3N 1X9,Montreal,QC
+Montreal Saint Patrick,,,-73.5803099,45.4703054,H2L,3H6,H2L 3H6,Montreal,QC
+Montreal Cadillac (Bell CO),,,-73.5469419,45.5770975,H1Y,1E9,H1Y 1E9,Montreal,QC
+Montreal Doval (Bell CO),,,-73.7413083,45.4434247,H9X,3V5,H9X 3V5,Baie-d'Urfé,QC
+Montreal Roland-Therrien (Bell CO),,,-73.4684054,45.5373149,H1Y,1E9,H1Y 1E9,Montreal,QC
+Montreal Sherbrooke E (Bell CO),,,-73.5045733,45.670785,H1Y,1E9,H1Y 1E9,Montreal,QC
+Montreal Sauvé (Bell CO),,,-73.6524716,45.5567352,H3N,1X9,H3N 1X9,Montreal,QC
+Montreal Beaver Hall,,,-73.565488,45.5023571,H2X,1S1,H2X 1S1,Montreal,QC
