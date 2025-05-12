@@ -2,214 +2,162 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Leaflet – OSM & Satellite + CSV Clustering & Heatmap</title>
+  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+
+  <!-- Styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
-  <style> html, body, #map { height: 100%; margin: 0; padding: 0; } </style>
   <style>
-    .fsaCluster { margin-bottom: 10px; }
-    .buildingCluster {
-      margin-bottom: 12px;
-      background: rgba(247,250,255,0.7);
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(51,136,255,0.08);
-      padding: 10px 14px;
-      border-left: 4px solid #3388ff;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 15px;
-      color: #234;
-      transition: box-shadow 0.2s;
-    }
-    .buildingCluster:hover {
-      box-shadow: 0 4px 16px rgba(51,136,255,0.18);
-      background: rgba(234,243,255,0.85);
-    }
-    .reportCluster {
-      background: rgba(255,255,255,0.7);
-      padding: 8px;
-      border-radius: 4px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.15);
-      font-family: sans-serif;
-      line-height: 1.4;
-      width: 200px;
-      backdrop-filter: blur(2px);
-    }
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .reportCluster { background: rgba(255,255,255,0.8); padding: 8px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.2); width: 220px; font-family: sans-serif; }
   </style>
 </head>
-  
 <body>
   <div id="map"></div>
 
-  <!-- Leaflet core JS -->
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Heatmap plugin -->
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-  <!-- CSV parser -->
   <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
-  <!-- MarkerCluster plugin -->
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // 1. Initialize the map
+    // Initialize map
     const map = L.map('map').setView([43.7, -79.4], 10);
 
-    // 2. Base layers
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
-    const satellite = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri & contributors', maxZoom: 19
-    });
+    // Base layers
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 19 });
     osm.addTo(map);
-    L.control.layers({ "OSM": osm, "Satellite": satellite }).addTo(map);
 
-    // 3. Heatmap setup
-    let heatPoints = [];
-    let heatLayer = null;
-    const heatmapThresholdZoom = 13;
+    // Layer control
+    const layersControl = L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
 
-    // 4. MarkerCluster group
+    // Heatmap & clustering
+    let heatPoints = [], heatLayer;
+    const heatThreshold = 13;
+    // const heatGradient = {
+    //   0.1: 'rgba(0,   0,   255, 0.2)',
+    //   0.3: 'rgba(0,   255, 0,   0.3)',
+    //   0.5: 'rgba(255, 255, 0,   0.4)',
+    //   0.7: 'rgba(255, 165, 0,   0.5)', 
+    //   1.0: 'rgba(255, 0,   0,   0.6)' 
+    // };
+    const heatGradient = {
+      0.1: 'blue',   // low intensity
+      0.2: 'lime',   // moderate-low intensity
+      0.3: 'yellow', // medium intensity
+      0.4: 'orange', // moderate-high intensity
+      0.7: 'red'     // highest intensity
+    };
     const markers = L.markerClusterGroup();
-
-    // 5. Load CSV, create clusters & heat points
-    Papa.parse('./data/npop_points.csv', {
-      header: true,
-      download: true,
-      error: err => console.error('CSV load error:', err),
+    Papa.parse('/data/npop_points.csv', {
+      header: true, download: true,
       complete: ({ data }) => {
-        data.forEach(row => {
-          const lat = parseFloat(row.y);
-          const lon = parseFloat(row.x);
+        data.forEach(r => {
+          const lat = +r.y, lon = +r.x;
           if (!isNaN(lat) && !isNaN(lon)) {
-            const marker = L.marker([lat, lon])
-              .bindPopup(
-                `<strong>${row.name || 'n/a'}</strong> (${row.city || 'n/a'})<br>
-                <i>${row.address || 'n/a'}</i><br>`
-              );
-            markers.addLayer(marker);
+            // create the marker and bind its popup
+            const mk = L.marker([lat, lon]).bindPopup(
+              `<strong>${r.name || 'n/a'}</strong><br>${r.address || 'n/a'}`
+            );
+
+            // zoom-in-on-click
+            mk.on('click', e => {
+              // you can adjust the "18" below to control how close you zoom in
+              map.setView(e.latlng, 18);
+            });
+
+            markers.addLayer(mk);
             heatPoints.push([lat, lon, 1]);
           }
         });
         map.addLayer(markers);
-        createHeatmap();
+        updateHeat();
       }
     });
-
-    // 6. Create or refresh heatmap
-    function createHeatmap() {
-      if (heatLayer) { map.removeLayer(heatLayer); }
-      heatLayer = L.heatLayer(heatPoints, {
-        radius: 75,
-        blur: 15,
-        maxZoom: 17,
-        max: 2,
-        minOpacity: 0.1,
-        gradient: { 0.1: 'blue', 0.2: 'lime', 0.3: 'yellow', 0.6: 'red' }
-      });
-      if (map.getZoom() <= heatmapThresholdZoom) {
-        heatLayer.addTo(map);
-      }
+    function updateHeat() {
+      if (heatLayer) map.removeLayer(heatLayer);
+      heatLayer = L.heatLayer(heatPoints, { radius: 50, blur: 30, minOpacity: 0.3, gradient: heatGradient});
+      if (map.getZoom() <= heatThreshold) map.addLayer(heatLayer);
     }
-
-    // 7. Toggle heatmap on zoom events
     map.on('zoomend', () => {
-      if (map.getZoom() > heatmapThresholdZoom) {
-        if (heatLayer && map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
-      } else {
-        if (heatLayer && !map.hasLayer(heatLayer)) heatLayer.addTo(map);
-      }
+      if (map.getZoom() > heatThreshold) map.removeLayer(heatLayer);
+      else if (heatLayer) map.addLayer(heatLayer);
     });
 
-    // 8. Report cluster section
-      // --- GEOJSON LAYER LOADER ---
-   // 1) CREATE FSA HOVER BOX
-   const defaultFsaMsg = 'Hover over an area to see NPOP count / FSA.';
+    // --- Highlight Functions for FSA Layers ---
+    function highlightFeatureStyle(layer, baseStyle) {
+      layer.setStyle({
+        weight:      (baseStyle.weight || 2) + 3,         // increased border weight
+        color:       '#02c002',                               // grey border on hover
+        fillOpacity: (baseStyle.opacity || 0.3) + 0.2      // more opaque fill
+      });
+      if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+    }
+
+    // Report controls
     const fsaControl = L.control({ position: 'topright' });
-    fsaControl.onAdd = () => {
-      const d = L.DomUtil.create('div', 'reportCluster fsaCluster');
-      d.innerHTML = defaultFsaMsg;
-      return d;
-    };
+    fsaControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(document.createTextNode('Hover over an area to see detailed FSA info.')).parentNode;
     fsaControl.addTo(map);
-    function updateFsaReport(html) {
-      fsaControl._div.innerHTML = html;
-    }
 
-    // 2) CREATE BUILDING CLICK BOX
-    const defaultBldgMsg = 'Click a building for details.';
     const bldgControl = L.control({ position: 'topright' });
-    bldgControl.onAdd = () => {
-      const d = L.DomUtil.create('div', 'reportCluster buildingCluster');
-      d.innerHTML = defaultBldgMsg;
-      return d;
-    };
+    bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(document.createTextNode('Click on building')).parentNode;
     bldgControl.addTo(map);
-    function updateBuildingReport(html) {
-      bldgControl._div.innerHTML = html;
-    }
 
-    // 3) LOAD FSA LAYER WITH MOUSEOVER/MOUSEOUT
-    function renderFsaInfo(p) {
-      return `
-        <strong>${p.PRNAME} – <i>${p.CFSAUID||'n/a'}</i></strong><br>
-        DGUID: ${p.DGUID||'n/a'}<br>
-        Land area: ${p.LANDAREA||'—'}<br>
-        NPOP Count: <strong>${p.npop_count||'n/a'}</strong>
-      `;
-    }
-    const fsasLayer = L.geoJSON(null, {
-      style: { color: '#3388ff', weight: 2, opacity: 0.6 },
-      onEachFeature(feat, layer) {
-        layer.on('mouseover', () => updateFsaReport(renderFsaInfo(feat.properties)));
-        layer.on('mouseout',  () => updateFsaReport(defaultFsaMsg));
-      }
-    }).addTo(map);
+    const fsaConfigs = [
+  { zip: '/data/ontario_fsa.zip', label: 'Ontario FSA', style: { color: '#888', weight: 2, opacity: 0.15 } },
+  { zip: '/data/quebec_fsa.zip',   label: 'Quebec FSA',   style: { color: '#888', weight: 2, opacity: 0.15 } }
+];
 
-    Promise.all([
-  fetch('./data/ontario_fsa_with_npop_count_4326.json')
-    .then(res => {
-      if (!res.ok) throw new Error(`Ontario FSA load failed: ${res.status}`);
-      return res.json();
-    }),
-  fetch('./data/quebec_fsa_with_npop_count_4326.json')
-    .then(res => {
-      if (!res.ok) throw new Error(`Quebec FSA load failed: ${res.status}`);
-      return res.json();
+fsaConfigs.forEach(({ zip, label, style }) => {
+  shp(zip)
+    .then(geojson => {
+      const layer = L.geoJSON(geojson, {
+        style: style,
+        onEachFeature: (feat, lyr) => {
+          // <-- CHANGED: add hover highlight and reset
+          lyr.on('mouseover', e => {
+            highlightFeatureStyle(e.target, style);    // bold & grey highlight
+            const p = feat.properties;
+            fsaControl.getContainer().innerHTML =
+              `<strong>${p.PRNAME||'n/a'} – <i>${p.CFSAUID||'n/a'}</i></strong><br>` +
+              `DGUID: ${p.DGUID||'n/a'}<br>` +
+              `Land area: ${p.LANDAREA||'—'}<br>` +
+              `NPOP Count: <strong>${p.npop_count||'n/a'}</strong>`;
+          });
+          lyr.on('mouseout', e => {
+            lyr.setStyle(style);                        // reset to original style
+            fsaControl.getContainer().innerHTML =
+              'Hover over an area to see detailed FSA info.';
+          });
+        }
+      }).addTo(map);
+      layersControl.addOverlay(layer, label);
     })
-])
-.then(([ont, que]) => {
-  console.log('Ontario features:', ont.features.length, ont);
-  console.log('Quebec features:', que.features.length, que);
-  fsasLayer.addData(ont);   // you can also do .addData(ont.features)
-  fsasLayer.addData(que);
-  // optional: zoom to show all FSAs
-  // map.fitBounds(fsasLayer.getBounds());
-})
-.catch(err => console.error('Error loading FSA layers:', err));
+    .catch(e => console.error(`${label} load error`, e));
+});
 
-// 4) LOAD BUILDING LAYER WITH CLICK
-fetch('./data/npop_buildings.json')
-  .then(res => {
-    if (!res.ok) throw new Error(`Buildings load failed: ${res.status}`);
-    return res.json();
-  })
-  .then(buildingData => {
-    L.geoJSON(buildingData, {
-      style: { color: '#ff7800', weight: 2, opacity: 0.8 },
-      onEachFeature: (feat, layer) => {
-        layer.on('click', () => {
-          const p = feat.properties;
-          updateBuildingReport(`
-            <strong>${p.name || 'n/a'}</strong><br>
-            ${p.entityId || 'n/a'}<br>
-            ${p.description || 'n/a'}
-          `);
-        });
-      }
-    }).addTo(map);
-  })
-  .catch(err => console.error('Error loading buildings GeoJSON:', err));
+
+    // Building JSON layer
+    fetch('./data/npop_buildings.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(js => {
+        const bldgLayer = L.geoJSON(js, {
+          style: { color: '#e555f6', weight: 2, opacity: 0.5 },
+          onEachFeature: (feat, lyr) => {
+            lyr.on('click', () => {
+              const p = feat.properties;
+              bldgControl.getContainer().innerHTML = `<strong>${p.name||'n/a'}</strong><br>${p.entityId||'n/a'}<br>${p.description||'n/a'}`;
+            });
+          }
+        }).addTo(map);
+        layersControl.addOverlay(bldgLayer, 'Buildings');
+      })
+      .catch(e => console.error('Buildings load error', e));
 
   </script>
 </body>
