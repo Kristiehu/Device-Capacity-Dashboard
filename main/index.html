@@ -2,19 +2,36 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles</title>
+  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles + Search + Report + Filter</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 
   <!-- Styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.css"/>
   <style>
     html, body, #map { height: 100%; margin: 0; padding: 0; }
-    .reportCluster { background: rgba(255,255,255,0.8); padding: 8px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.2); width: 220px; font-family: sans-serif; }
+    .reportCluster { background: rgba(255,255,255,0.8); padding: 8px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.2); width: 240px; font-family: sans-serif; }
+    #reportTitle { position: absolute; top: 10px; left: 0; right: 0; text-align: center; z-index: 1000; font-size: 24px; font-weight: bold; color: #333; }
+    #controlsContainer { position: absolute; top: 50px; left: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+    #filterInput { width: 240px; padding: 4px; font-size: 14px; }
   </style>
 </head>
 <body>
+  <!-- Big Title -->
+  <div id="reportTitle">xxxx report</div>
+
+  <!-- Controls (report + filter) -->
+  <div id="controlsContainer">
+    <div id="reportBox" class="reportCluster">
+      Showing total npop count by city: <span id="npopCount">0</span>
+    </div>
+    <input id="filterInput" list="filterList" placeholder="Filter by name..." />
+    <datalist id="filterList"></datalist>
+  </div>
+
+  <!-- Map Container -->
   <div id="map"></div>
 
   <!-- Scripts -->
@@ -23,74 +40,85 @@
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.js"></script>
 
   <script>
     // Initialize map
     const map = L.map('map').setView([43.7, -79.4], 10);
-
-    // Base layers
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 19 });
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OSM' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{ attribution:'© Esri', maxZoom:19 });
     osm.addTo(map);
+    const layersControl = L.control.layers({ 'OSM':osm, 'Satellite':satellite },{}, {collapsed:false}).addTo(map);
 
-    // Layer control
-    const layersControl = L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
-
-    // Heatmap & clustering
+    // Heat & cluster setup
     let heatPoints = [], heatLayer;
     const heatThreshold = 13;
-    // const heatGradient = {
-    //   0.1: 'rgba(0,   0,   255, 0.2)',
-    //   0.3: 'rgba(0,   255, 0,   0.3)',
-    //   0.5: 'rgba(255, 255, 0,   0.4)',
-    //   0.7: 'rgba(255, 165, 0,   0.5)', 
-    //   1.0: 'rgba(255, 0,   0,   0.6)' 
-    // };
-    const heatGradient = {
-      0.1: 'blue',   // low intensity
-      0.2: 'lime',   // moderate-low intensity
-      0.3: 'yellow', // medium intensity
-      0.4: 'orange', // moderate-high intensity
-      0.7: 'red'     // highest intensity
-    };
+    const heatGradient = {0.1:'rgba(0,0,255,0.2)',0.3:'rgba(0,255,0,0.3)',0.5:'rgba(255,255,0,0.4)',0.7:'rgba(255,165,0,0.5)',1.0:'rgba(255,0,0,0.6)'};
     const markers = L.markerClusterGroup();
-    Papa.parse('/data/npop_points.csv', {
-      header: true, download: true,
-      complete: ({ data }) => {
-        data.forEach(r => {
-          const lat = +r.y, lon = +r.x;
-          if (!isNaN(lat) && !isNaN(lon)) {
-            // create the marker and bind its popup
-            const mk = L.marker([lat, lon]).bindPopup(
-              `<strong>${r.name || 'n/a'}</strong><br>${r.address || 'n/a'}`
-            );
+    const suggestionSet = new Set();
 
-            // zoom-in-on-click
-            mk.on('click', e => {
-              // you can adjust the "18" below to control how close you zoom in
-              map.setView(e.latlng, 18);
-            });
+    // Load CSV points
+    Papa.parse('/data/npop_points.csv',{header:true,download:true,complete:({data})=>{
+      data.forEach(r=>{
+        const lat=+r.y, lon=+r.x;
+        if(!isNaN(lat)&&!isNaN(lon)){
+          const title = r.name||'n/a';
+          suggestionSet.add(title);
+          const mk = L.marker([lat,lon],{title});
+          mk.bindPopup(`<strong>${title}</strong><br>${r.address||'n/a'}`);
+          mk.on('click',e=>map.setView(e.latlng,16));
+          markers.addLayer(mk);
+          heatPoints.push([lat,lon,1]);
+        }
+      });
+      map.addLayer(markers);
+      updateHeat();
+      document.getElementById('npopCount').textContent = markers.getLayers().length;
 
+      // Populate filter suggestions
+      const list = document.getElementById('filterList');
+      Array.from(suggestionSet).sort().forEach(name=>{
+        const opt = document.createElement('option'); opt.value = name;
+        list.appendChild(opt);
+      });
+
+      // Filter logic
+      const input = document.getElementById('filterInput');
+      input.addEventListener('input',()=>{
+        const val = input.value.toLowerCase();
+        markers.clearLayers();
+        suggestionSet.forEach(name=>{}); // ensure list, but filter next
+        markers.eachLayer(()=>{}); // placeholder
+        heatPoints=[];
+        data.forEach(r=>{
+          if((r.name||'').toLowerCase().includes(val)){
+            const lat=+r.y, lon=+r.x;
+            const mk = L.marker([lat,lon],{title:r.name});
+            mk.bindPopup(`<strong>${r.name}</strong><br>${r.address||'n/a'}`);
             markers.addLayer(mk);
-            heatPoints.push([lat, lon, 1]);
+            heatPoints.push([lat,lon,1]);
           }
         });
+        document.getElementById('npopCount').textContent = markers.getLayers().length;
         map.addLayer(markers);
         updateHeat();
-      }
-    });
-    function updateHeat() {
-      if (heatLayer) map.removeLayer(heatLayer);
-      heatLayer = L.heatLayer(heatPoints, { radius: 50, blur: 30, minOpacity: 0.3, gradient: heatGradient});
-      if (map.getZoom() <= heatThreshold) map.addLayer(heatLayer);
-    }
-    map.on('zoomend', () => {
-      if (map.getZoom() > heatThreshold) map.removeLayer(heatLayer);
-      else if (heatLayer) map.addLayer(heatLayer);
-    });
+      });
 
-    // --- Highlight Functions for FSA Layers ---
-    function highlightFeatureStyle(layer, baseStyle) {
+      // Search control
+      const searchControl = new L.Control.Search({layer:markers,initial:false,propertyName:'title',zoom:16,textPlaceholder:'Search name...'});
+      map.addControl(searchControl);
+      
+    }});
+
+    function updateHeat(){
+      if(heatLayer) map.removeLayer(heatLayer);
+      heatLayer = L.heatLayer(heatPoints,{radius:50,blur:30,minOpacity:0.3,gradient:heatGradient});
+      if(map.getZoom()<=heatThreshold) map.addLayer(heatLayer);
+    }
+    map.on('zoomend',()=>{ if(map.getZoom()>heatThreshold) map.removeLayer(heatLayer); else if(heatLayer) map.addLayer(heatLayer); });
+
+      // --- Highlight Functions for FSA Layers ---
+      function highlightFeatureStyle(layer, baseStyle) {
       layer.setStyle({
         weight:      (baseStyle.weight || 2) + 3,         // increased border weight
         color:       '#02c002',                               // grey border on hover
@@ -105,7 +133,7 @@
     fsaControl.addTo(map);
 
     const bldgControl = L.control({ position: 'topright' });
-    bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(document.createTextNode('Click on building')).parentNode;
+    bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(document.createTextNode('Click on a building to see detailed info.')).parentNode;
     bldgControl.addTo(map);
 
     const fsaConfigs = [
@@ -147,7 +175,7 @@ fsaConfigs.forEach(({ zip, label, style }) => {
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(js => {
         const bldgLayer = L.geoJSON(js, {
-          style: { color: '#e555f6', weight: 2, opacity: 0.5 },
+          style: { color: '#e555f6', weight: 3, opacity: 0.8, fillOpacity: 0.2 },
           onEachFeature: (feat, lyr) => {
             lyr.on('click', () => {
               const p = feat.properties;
@@ -158,7 +186,6 @@ fsaConfigs.forEach(({ zip, label, style }) => {
         layersControl.addOverlay(bldgLayer, 'Buildings');
       })
       .catch(e => console.error('Buildings load error', e));
-
   </script>
 </body>
 </html>
