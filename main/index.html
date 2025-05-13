@@ -242,7 +242,7 @@
       });
 
       // Building layer
-      fetch('./data/npop_buildings.json')
+      fetch('data/npop_buildings.json')
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(data => {
           const bldgLayer = L.geoJSON(data, {
