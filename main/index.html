@@ -144,7 +144,7 @@
 
       // Load CSV
       const parsedData = await new Promise(resolve => {
-        Papa.parse('/data/npop_points.csv', { header: true, download: true, complete: ({ data }) => resolve(data) });
+        Papa.parse('./data/npop_points.csv', { header: true, download: true, complete: ({ data }) => resolve(data) });
       });
 
       // Populate markers & suggestions
@@ -213,8 +213,8 @@
 
       // Load FSA shapefiles
       const fsaConfigs = [
-        { zip: '/data/ontario_fsa.zip', label: 'Ontario FSA', style: { color: '#888', weight: 2, opacity: 0.15 } },
-        { zip: '/data/quebec_fsa.zip', label: 'Quebec FSA', style: { color: '#888', weight: 2, opacity: 0.15 } }
+        { zip: './data/ontario_fsa.zip', label: 'Ontario FSA', style: { color: '#888', weight: 2, opacity: 0.15 } },
+        { zip: './data/quebec_fsa.zip', label: 'Quebec FSA', style: { color: '#888', weight: 2, opacity: 0.15 } }
       ];
       fsaConfigs.forEach(({ zip, label, style }) => {
         shp(zip).then(geojson => {
