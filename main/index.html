@@ -135,15 +135,6 @@
       // FSA layer control
       const fsaThreshold = 17;
       let fsaLayers = [];
-      const provinceControl = L.control({ position: 'topleft' });
-      provinceControl.onAdd = () => {
-        const div = L.DomUtil.create('div', 'reportCluster provinceControl');
-        div.innerHTML = `
-          <label><input type="checkbox" id="chkOntario"> Ontario</label><br>
-          <label><input type="checkbox" id="chkQuebec"> Quebec</label>`;
-          return div;
-        };
-        provinceControl.addTo(map);
 
       // UI refs
       const npopCountEl = document.getElementById('npopCount');
