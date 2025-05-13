@@ -1,3 +1,2 @@
 *.geojson filter=lfs diff=lfs merge=lfs -text
-*.json filter=lfs diff=lfs merge=lfs -text
 main/data/npop_buidlings.json filter=lfs diff=lfs merge=lfs -text
