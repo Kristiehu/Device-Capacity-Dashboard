@@ -17,29 +17,48 @@
       padding: 0;
     }
     .reportCluster {
-      background: rgba(255,255,255,0.8); /* semi-transparent white */
-      padding: 8px;
-      border-radius: 4px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-      width: 240px;
-      font-family: sans-serif;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 70%, rgba(230,245,255,0.85) 100%);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 12px;
+      color: #222;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+      border: 1px solid #e0e7ef;
+      position: relative;
+      z-index: 1000;
+      transition: box-shadow 0.2s, border 0.2s;
     }
+    .reportCluster:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
+      border: 1.5px solid #b3d4fc;
+    }
+    
     #reportTitle {
+      box-sizing: content-box;
       position: absolute;
       top: 10px;
       left: 0;
       right: 0;
       text-align: center;
-      z-index: 1000;  /* above map */
+      z-index: 1000;
       font-size: 24px;
       font-weight: bold;
-      color: #333;
+      color: black;
+      text-shadow:
+        -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white,
+        -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
     }
     #controlsContainer {
       position: absolute;
-      top: 50px;
-      left: 10px;
+      top: 12px;
+      left: 50px;
       z-index: 1000;
+      background: rgba(255, 255, 255, 0.8);
+      width: 250px;
+      font-family: sans-serif;
+      font-size: 12px;
+      color: #333;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -47,12 +66,19 @@
     #filterContainer {
       display: flex;
       align-items: center;
+      padding: 4px;
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+      width: 240px;
       gap: 4px;
     }
     #filterInput {
-      width: 200px;
+      flex: 1;
       padding: 4px;
-      font-size: 14px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     }
     #clearBtn {
       background: #e0e0e0;
@@ -68,25 +94,17 @@
   </style>
 </head>
 <body>
-  <!-- Main title for the report -->
-  <div id="reportTitle">xxxx report</div>
-
-  <!-- Container for report metrics and filter control -->
+  <div id="reportTitle">Npop Count & Distribution Report</div>
   <div id="controlsContainer">
     <div id="reportBox" class="reportCluster">
-      Showing total npop count by city: <span id="npopCount">0</span>
+      Showing total npop count by city: <strong><span id="npopCount">0</span></strong>
     </div>
     <div id="filterContainer">
-      <!-- User input for filtering marker layer -->
       <input id="filterInput" list="filterList" placeholder="Filter by name..." />
-      <!-- Clear filter button -->
       <button id="clearBtn" title="Clear filter">×</button>
     </div>
-    <!-- Autocomplete suggestions for filter input -->
     <datalist id="filterList"></datalist>
   </div>
-
-  <!-- Map div where Leaflet renders -->
   <div id="map"></div>
 
   <!-- External JS libraries -->
@@ -99,168 +117,113 @@
 
   <script>
     (async function initMap() {
-      // 1. Initialize base map and tile layers
       const map = L.map('map').setView([43.7, -79.4], 10);
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OSM'
-      });
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
       const satellite = L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { attribution: '© Esri', maxZoom: 19 }
       );
-      osm.addTo(map);  // default layer
+      osm.addTo(map);
       L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
 
-      // 2. Prepare heatmap & clustering structures
+      // Heatmap & clustering
       let heatPoints = [], heatLayer;
-      const heatThreshold = 13;  // zoom threshold to toggle heatmap
-      const heatGradient = {
-        0.1: 'rgba(0,0,255,0.2)',
-        0.3: 'rgba(0,255,0,0.3)',
-        0.5: 'rgba(255,255,0,0.4)',
-        0.7: 'rgba(255,165,0,0.5)',
-        1.0: 'rgba(255,0,0,0.6)'
-      };
-      const markers = L.markerClusterGroup();  // cluster group for points
+      const heatThreshold = 13;
+      const heatGradient = { 0.1: 'rgba(0,0,255,0.2)', 0.3: 'rgba(0,255,0,0.3)', 0.5: 'rgba(255,255,0,0.4)', 0.7: 'rgba(255,165,0,0.5)', 1.0: 'rgba(255,0,0,0.6)' };
+      const markers = L.markerClusterGroup();
 
-      // 3. UI element references
+      // FSA layer control
+      const fsaThreshold = 17;
+      let fsaLayers = [];
+      const provinceControl = L.control({ position: 'topleft' });
+      provinceControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'reportCluster provinceControl');
+        div.innerHTML = `
+          <label><input type="checkbox" id="chkOntario"> Ontario</label><br>
+          <label><input type="checkbox" id="chkQuebec"> Quebec</label>`;
+          return div;
+        };
+        provinceControl.addTo(map);
+
+      // UI refs
       const npopCountEl = document.getElementById('npopCount');
       const filterInput = document.getElementById('filterInput');
       const filterList = document.getElementById('filterList');
       const clearBtn = document.getElementById('clearBtn');
 
-      // 4. Load and parse CSV data with async/await
+      // Load CSV
       const parsedData = await new Promise(resolve => {
-        Papa.parse('/data/npop_points.csv', {
-          header: true,
-          download: true,
-          complete: ({ data }) => resolve(data)
-        });
+        Papa.parse('/data/npop_points.csv', { header: true, download: true, complete: ({ data }) => resolve(data) });
       });
 
-      // 5. Populate markers & heatPoints, collect suggestions
+      // Populate markers & suggestions
       const suggestionSet = new Set();
       parsedData.forEach(record => {
-        const lat = +record.y;
-        const lon = +record.x;
+        const lat = +record.y, lon = +record.x;
         if (!isNaN(lat) && !isNaN(lon)) {
-          const title = record.name || 'n/a';
-          suggestionSet.add(title);  // for autocomplete
-
-          // Create marker with title property for search & filter
-          const mk = L.marker([lat, lon], { title });
-          mk.bindPopup(
-            `<strong>${title}</strong><br>${record.address || 'n/a'}`
-          );
+          const title = record.name || 'n/a'; suggestionSet.add(title);
+          const mk = L.marker([lat, lon], { title }).bindPopup(`<strong>${title}</strong><br>${record.address||'n/a'}`);
           markers.addLayer(mk);
-
-          // Each point contributes a uniform intensity of 1 to heatmap
           heatPoints.push([lat, lon, 1]);
         }
       });
 
-      // 6. Initial display: add clusters and heatmap layer
       map.addLayer(markers);
       updateHeat();
-      npopCountEl.textContent = markers.getLayers().length;  // update count
+      npopCountEl.textContent = markers.getLayers().length;
 
-      // 7. Build autocomplete datalist for filter
       Array.from(suggestionSet).sort().forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        filterList.appendChild(option);
+        const option = document.createElement('option'); option.value = name; filterList.appendChild(option);
       });
 
-      // 8. Initialize search control using marker titles
-      new L.Control.Search({
-        layer: markers,
-        initial: false,
-        propertyName: 'title',
-        zoom: 17,
-        textPlaceholder: 'Search name...'
-      }).addTo(map);
-
-      // 9. Filter function: rebuild marker layer & heatmap based on input
       function applyFilter() {
-        const filterValue = filterInput.value.toLowerCase();
-        markers.clearLayers();  // remove all markers
-        heatPoints = [];        // reset heat data
-
-        // Re-add only matching records
-        parsedData.forEach(record => {
-          const name = record.name || '';
-          if (name.toLowerCase().includes(filterValue)) {
-            const lat = +record.y;
-            const lon = +record.x;
-            const mk = L.marker([lat, lon], { title: name });
-            mk.bindPopup(
-              `<strong>${name}</strong><br>${record.address || 'n/a'}`
-            );
-            markers.addLayer(mk);
-            heatPoints.push([lat, lon, 1]);
+        const val = filterInput.value.toLowerCase();
+        markers.clearLayers(); heatPoints = []; npopCountEl.textContent = 0;
+        parsedData.forEach(r => { if ((r.name||'').toLowerCase().includes(val)) {
+            const lat=+r.y, lon=+r.x;
+            const mk = L.marker([lat, lon], { title: r.name }).bindPopup(`<strong>${r.name}</strong><br>${r.address||'n/a'}`);
+            markers.addLayer(mk); heatPoints.push([lat, lon, 1]);
           }
         });
-
-        // Update UI count and heatmap
+        if (markers.getLayers().length) {
+          map.fitBounds(L.featureGroup(markers.getLayers()).getBounds());
+        } else map.setView([43.7, -79.4], 10);
         npopCountEl.textContent = markers.getLayers().length;
         updateHeat();
       }
-
-      // Tie filter and clear controls to their handlers
       filterInput.addEventListener('input', applyFilter);
-      clearBtn.addEventListener('click', () => {
-        filterInput.value = '';
-        applyFilter();
-      });
+      clearBtn.addEventListener('click', () => { filterInput.value = ''; applyFilter(); });
 
-      // 10. Heatmap updater: toggles layer based on zoom
       function updateHeat() {
         if (heatLayer) map.removeLayer(heatLayer);
-        heatLayer = L.heatLayer(heatPoints, {
-          radius: 50,
-          blur: 30,
-          minOpacity: 0.3,
-          gradient: heatGradient
-        });
-        if (map.getZoom() <= heatThreshold) {
-          map.addLayer(heatLayer);
-        }
+        heatLayer = L.heatLayer(heatPoints, { radius: 50, blur: 30, minOpacity: 0.3, gradient: heatGradient });
+        if (map.getZoom() <= heatThreshold) map.addLayer(heatLayer);
       }
       map.on('zoomend', () => {
-        if (map.getZoom() > heatThreshold) {
-          map.removeLayer(heatLayer);
-        } else if (heatLayer) {
-          map.addLayer(heatLayer);
-        }
+        const z = map.getZoom();
+        if (z > heatThreshold) map.removeLayer(heatLayer);
+        else if (heatLayer) map.addLayer(heatLayer);
+        // Toggle FSA layers
+        fsaLayers.forEach(layer => {
+          if (z > fsaThreshold) map.removeLayer(layer);
+          else map.addLayer(layer);
+        });
       });
 
-      // 11. FSA highlight helper: bold border and increase opacity on hover
-      function highlightFeatureStyle(layer, baseStyle) {
-        layer.setStyle({
-          weight: (baseStyle.weight || 2) + 3,
-          color: '#02c002',
-          fillOpacity: (baseStyle.opacity || 0.3) + 0.2
-        });
-        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-          layer.bringToFront();
-        }
-      }
-
-      // 12. Report controls for FSAs and buildings
+      // Report controls
       const fsaControl = L.control({ position: 'topright' });
-      fsaControl.onAdd = () => L.DomUtil.create('div', 'reportCluster')
-        .appendChild(document.createTextNode('Hover over an area to see detailed FSA info.')).parentNode;
-      fsaControl.addTo(map);
-
+      fsaControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(
+        document.createTextNode('Hover over an area to see detailed FSA info.')
+      ).parentNode; fsaControl.addTo(map);
       const bldgControl = L.control({ position: 'topright' });
-      bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster')
-        .appendChild(document.createTextNode('Click on a building to see detailed info.')).parentNode;
-      bldgControl.addTo(map);
+      bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(
+        document.createTextNode('Click on a building to see detailed info.')
+      ).parentNode; bldgControl.addTo(map);
 
-      // 13. Load and style FSA shapefiles with hover interactions
+      // Load FSA shapefiles
       const fsaConfigs = [
         { zip: '/data/ontario_fsa.zip', label: 'Ontario FSA', style: { color: '#888', weight: 2, opacity: 0.15 } },
-        { zip: '/data/quebec_fsa.zip',   label: 'Quebec FSA',   style: { color: '#888', weight: 2, opacity: 0.15 } }
+        { zip: '/data/quebec_fsa.zip', label: 'Quebec FSA', style: { color: '#888', weight: 2, opacity: 0.15 } }
       ];
       fsaConfigs.forEach(({ zip, label, style }) => {
         shp(zip).then(geojson => {
@@ -271,10 +234,10 @@
                 highlightFeatureStyle(e.target, style);
                 const props = feature.properties;
                 fsaControl.getContainer().innerHTML =
-                  `<strong>${props.PRNAME || 'n/a'} – <i>${props.CFSAUID || 'n/a'}</i></strong><br>` +
-                  `DGUID: ${props.DGUID || 'n/a'}<br>` +
-                  `Land area: ${props.LANDAREA || '—'}<br>` +
-                  `NPOP Count: <strong>${props.npop_count || 'n/a'}</strong>`;
+                  `<strong>${props.PRNAME||'n/a'} – <i>${props.CFSAUID||'n/a'}</i></strong><br>` +
+                  `DGUID: ${props.DGUID||'n/a'}<br>` +
+                  `Land area: ${props.LANDAREA||'—'}<br>` +
+                  `NPOP Count: <strong>${props.npop_count||'n/a'}</strong>`;
               });
               lyr.on('mouseout', () => {
                 lyr.setStyle(style);
@@ -282,13 +245,14 @@
               });
             }
           }).addTo(map);
+          fsaLayers.push(layer);
           L.control.layers().addOverlay(layer, label);
         }).catch(err => console.error(`${label} load error`, err));
       });
 
-      // 14. Load building GeoJSON and bind click interaction
+      // Building layer
       fetch('./data/npop_buildings.json')
-        .then(response => response.ok ? response.json() : Promise.reject(response.status))
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(data => {
           const bldgLayer = L.geoJSON(data, {
             style: { color: '#e555f6', weight: 3, opacity: 0.8, fillOpacity: 0.2 },
@@ -296,15 +260,21 @@
               lyr.on('click', () => {
                 const props = feature.properties;
                 bldgControl.getContainer().innerHTML =
-                  `<strong>${props.name || 'n/a'}</strong><br>` +
-                  `${props.entityId || 'n/a'}<br>` +
-                  `${props.description || 'n/a'}`;
+                  `<strong>${props.name||'n/a'}</strong><br>` +
+                  `${props.entityId||'n/a'}<br>` +
+                  `${props.description||'n/a'}`;
               });
             }
           }).addTo(map);
           L.control.layers().addOverlay(bldgLayer, 'Buildings');
         })
         .catch(err => console.error('Buildings load error', err));
+
+      // Highlight style helper
+      function highlightFeatureStyle(layer, baseStyle) {
+        layer.setStyle({ weight: (baseStyle.weight||2) + 3, color: '#02c002', fillOpacity: (baseStyle.opacity||0.3) + 0.2 });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+      }
 
     })();
   </script>
