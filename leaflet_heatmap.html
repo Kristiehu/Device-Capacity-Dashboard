@@ -181,7 +181,7 @@
   </style>
 </head>
 <body>
-  <div id="reportTitle">Npop Count & Distribution Report</div>
+  <div id="reportTitle">Npop - DeviceCount & Distribution Report</div>
   <div id="controlsContainer">
     <div id="searchContainer">
       <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" />
@@ -218,7 +218,7 @@
   <!-- XLSX library for reading Excel files -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <script>
+  <!-- <script>
     // Initialize variables
     let geojsonData = null;
     let currentWeek = null;
@@ -235,8 +235,6 @@
         );
         osm.addTo(map);
         L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
-
-
 
 // create a legend control for the device usage
 
@@ -509,4 +507,285 @@ function drawMap(week) {
       });
 
 
-</script></body></html>
+</script> -->
+
+<script>
+  // Initialize map
+  const map = L.map('map').setView([43.7, -79.4], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
+
+  // Gradient color scheme: 0 = special color, then green → yellow-green → yellow → orange → red
+  function getColor(d) {
+    if (d === 0) return '#b0b8c1'; // No Usage (light gray-blue)
+    if (d <= 20) return '#43a047'; // <=20% (green)
+    if (d <= 40) return '#cddc39'; // <=40% (yellow-green)
+    if (d <= 60) return '#fdd835'; // <=60% (yellow)
+    if (d <= 80) return '#fb8c00'; // <=80% (orange)
+    if (d >  80) return '#e53935'; // <=100% (red)
+    return '#b0b8c1'; // fallback
+  }
+
+  // Legend
+  // Legend (professional, modern style with unique icons for each label)
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'info legend');
+    const grades = [0, 20, 40, 60, 80, 100];
+    const labels = [
+      {
+        text: 'No Usage<br><span style="font-weight:400;color:#888;">0%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#b0b8c1" stroke="#fff" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="#888" font-family="Arial" font-weight="bold">Ø</text></svg>`
+      },
+      {
+        text: 'Very Low<br><span style="font-weight:400;color:#888;">&le;20%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#43a047" stroke="#fff" stroke-width="1.5"/><path d="M6 10l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+      },
+      {
+        text: 'Low<br><span style="font-weight:400;color:#888;">&le;40%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#cddc39" stroke="#fff" stroke-width="1.5"/><rect x="7" y="7" width="6" height="6" rx="2" fill="#fffde7" stroke="#bdbd2e" stroke-width="1"/></svg>`
+      },
+      {
+        text: 'Moderate<br><span style="font-weight:400;color:#888;">&le;60%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fdd835" stroke="#fff" stroke-width="1.5"/><path d="M10 5v5l4 2" stroke="#bfa600" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+      },
+      {
+        text: 'High<br><span style="font-weight:400;color:#888;">&le;80%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fb8c00" stroke="#fff" stroke-width="1.5"/><polygon points="10,5 13,15 7,15" fill="#fff3e0" stroke="#e65100" stroke-width="1"/></svg>`
+      },
+      {
+        text: 'Critical<br><span style="font-weight:400;color:#888;">&le;100%</span>',
+        icon: `<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#e53935" stroke="#fff" stroke-width="1.5"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`
+      }
+    ];
+    div.innerHTML = `
+      <div style="
+        font-weight:700;
+        font-size:15px;
+        margin-bottom:8px;
+        color:#23272f;
+        letter-spacing:0.1px;
+        text-align:left;
+      ">
+        <span style="display:inline-block;vertical-align:middle;margin-right:6px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" style="vertical-align:middle">
+            <defs>
+              <radialGradient id="legendGlow" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#fff176" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#fb8c00" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#e53935" stop-opacity="1"/>
+              </radialGradient>
+            </defs>
+            <circle cx="11" cy="11" r="9" fill="url(#legendGlow)" stroke="#23272f" stroke-width="1.5"/>
+            <path d="M11 5.5v6" stroke="#23272f" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="11" cy="15.5" r="1.2" fill="#23272f"/>
+          </svg>
+        </span>
+        Usage Legend
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+    `;
+    labels.forEach((obj, i) => {
+      div.innerHTML += `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-block;vertical-align:middle;">${obj.icon}</span>
+          <span style="font-size:13px;line-height:1.2;">${obj.text}</span>
+        </div>
+      `;
+    });
+    div.innerHTML += '</div>';
+    return div;
+  };
+  legend.addTo(map);
+
+  // Data containers
+  let rows = [];
+  window.npopLayer = L.layerGroup().addTo(map);
+
+  // Load Excel & prepare weeks
+  fetch('data/capacity/capacity_summary.xlsx').then(r=>r.arrayBuffer()).then(ab=>{
+    const wb = XLSX.read(ab,{type:'array'});
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    const weekKeys = Object.keys(rows[0]).filter(k=>k.startsWith('% Used:'));
+    const weeks = weekKeys.map(k=>k.replace('% Used: ','').trim());
+    const sel = document.getElementById('weekSelector');
+    weeks.forEach(w=>{const o=document.createElement('option'); o.value = o.textContent = w; sel.append(o);});
+    sel.value = weeks[weeks.length-1];
+    drawNpop(sel.value);
+    sel.addEventListener('change', ()=> drawNpop(sel.value));
+  });
+
+  // Draw NPOP markers for a given week
+  function drawNpop(week){
+    window.npopLayer.clearLayers();
+    const key = `% Used: ${week}`;
+    rows.forEach(r=>{
+      const pct = Number(r[key]) || 0;
+      const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+      if(isNaN(lat)||isNaN(lon)) return;
+
+      // Choose SVG icon based on usage
+      let svgIcon;
+      if (pct === 0) {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#b0b8c1" stroke="#fff" stroke-width="2"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="#888" font-family="Arial" font-weight="bold">Ø</text></svg>`;
+      } else if (pct <= 20) {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#43a047" stroke="#fff" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+      } else if (pct <= 40) {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#cddc39" stroke="#fff" stroke-width="2"/><rect x="7" y="7" width="6" height="6" rx="2" fill="#fffde7" stroke="#bdbd2e" stroke-width="1"/></svg>`;
+      } else if (pct <= 60) {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fdd835" stroke="#fff" stroke-width="2"/><path d="M10 5v5l4 2" stroke="#bfa600" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+      } else if (pct <= 80) {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fb8c00" stroke="#fff" stroke-width="2"/><polygon points="10,5 13,15 7,15" fill="#fff3e0" stroke="#e65100" stroke-width="1"/></svg>`;
+      } else {
+        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#e53935" stroke="#fff" stroke-width="2"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
+      }
+
+      const m = L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: 'custom-legend-icon',
+          html: svgIcon,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -12]
+        })
+      });
+     m.on('click', function(e) { m.openPopup(); }); m.on('mouseover', function(e) { m.setStyle({ radius: 8, weight: 2, color: '#222' }); m.bringToFront();}); m.on('mouseout', function(e) { m.setStyle({ radius: 5.5, weight: 1, color: '#333' }); });
+
+      m.options.props = r;
+      m.bindPopup(
+        `
+        <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="
+              display:inline-block;
+              width:100%;
+              box-sizing:border-box;
+              padding:5px 0 5px 12px;
+              border-radius:6px 6px 0 0;
+              background: linear-gradient(90deg, #e9ecef 0%, #f8fafc 100%);
+              box-shadow: none;
+              font-size:16px;
+              font-weight:700;
+              color:#23272f;
+              letter-spacing:0.2px;
+              border: none;
+              text-shadow:none;
+              margin:0;
+              transition:background 0.3s;
+            ">
+              ${r.Name || 'Device'}
+              <span style="
+          font-size:13px;
+          font-weight:700;
+          margin-left:10px;
+            color:#222;
+            background:${getColor(pct)}CC;
+            ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
+          border-radius:5px;
+          padding:3px 2px;
+          border:1.5px solid #fff;
+          box-shadow:0 1px 4px rgba(0,0,0,0.10);
+          text-shadow:0 1px 2px #fff;
+          letter-spacing:0px;
+              ">
+          ${pct}%
+              </span>
+            </span>
+          </div>
+        </div>
+          <div style="margin-bottom:6px;">
+        <span style="color:#555;">${r.Address || ''}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Entity ID</td>
+          <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Device Group</td>
+          <td style="padding:4px 8px;">${r.Device_group}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Location</td>
+          <td style="padding:4px 8px;">${r.Floor}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Postal Code</td>
+          <td style="padding:4px 8px;">${r.Postal_code}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">City</td>
+          <td style="padding:4px 8px;">${r.City}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Usage</td>
+          <td style="padding:4px 8px;font-weight:bold;color:${getColor(pct)}">${pct}%</td>
+        </tr>
+          </table>
+        </div>
+        `
+      );
+      m.on('click', e => {
+        const popup = e.target.getPopup();
+        if (popup) {
+          popup.setLatLng(e.latlng);
+          popup.openOn(map);
+        }
+      });
+      m.on('mouseover', e => {
+        m.setStyle({ radius: 8, weight: 3, color: '#000', fillOpacity: 1 });;
+      });
+      m.on('mouseout', function(e) {
+        m.setStyle({ radius: 5.5, weight: 1, color: '#333' });
+      });
+      window.npopLayer.addLayer(m);
+    });
+  }
+
+  // SEARCH LOGIC
+  const searchInput = document.getElementById('searchInput');
+  const suggestions = document.getElementById('suggestions');
+  const modeRadios = document.querySelectorAll('input[name="searchMode"]');
+
+  // Prepare suggestion lists
+  const searchData = {
+    Device_Entity_ID: [...new Set(rows.map(r => r.Device_Entity_ID).filter(Boolean))].sort(),
+    Address:           [...new Set(rows.map(r => r.Address).filter(Boolean))].sort()
+  };
+
+  // Update datalist options
+  function updateSuggestions(term=''){
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    suggestions.innerHTML = '';
+    searchData[mode]
+      .filter(v => v.toLowerCase().includes(term.toLowerCase()))
+      .slice(0,10)
+      .forEach(v => { const opt = document.createElement('option'); opt.value = v; suggestions.append(opt); });
+  }
+  searchInput.addEventListener('input', e => updateSuggestions(e.target.value));
+  modeRadios.forEach(radio => radio.addEventListener('change', ()=>{
+    searchInput.value = '';
+    updateSuggestions();
+    searchInput.focus();
+  }));
+
+  // Perform search on change or Enter
+  function performSearch(){
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    const query = searchInput.value.trim().toLowerCase(); if(!query) return;
+    let found=false;
+    window.npopLayer.eachLayer(marker => {
+      const val = (marker.options.props[mode] || '').toString().toLowerCase();
+      if(val === query){
+        map.setView(marker.getLatLng(), 14);
+        marker.openPopup();
+        found=true;
+      }
+    });
+    if(!found) alert(`No match for "${searchInput.value}" in ${mode}`);
+  }
+  searchInput.addEventListener('change', performSearch);
+  searchInput.addEventListener('keydown', e => { if(e.key==='Enter'){ performSearch(); e.preventDefault(); }});
+</script>
+
+
+</body></html>
