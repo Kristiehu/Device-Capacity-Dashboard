@@ -218,297 +218,6 @@
   <!-- XLSX library for reading Excel files -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <!-- <script>
-    // Initialize variables
-    let geojsonData = null;
-    let currentWeek = null;
-    const usageByPostal = {};
-    const reportBox1 = document.getElementById('reportBox1');
-    const reportBox2 = document.getElementById('reportBox2');
-
-  // create a map and set its view to Toronto
-  const map=L.map('map').setView([43.7, -79.4], 10);
-  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
-        const satellite = L.tileLayer(
-          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          { attribution: '© Esri', maxZoom: 19 }
-        );
-        osm.addTo(map);
-        L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
-
-// create a legend control for the device usage
-
-const legend = L.control({ position: 'bottomright' });
-
-legend.onAdd = function(map) {
-  const div = L.DomUtil.create('div', 'info legend');
-  const thresholds = [0, 15, 30, 45, 60, 75, 90];
-  const labels = [
-    'No Usage - <b>0%</b>',
-    'Very Low - <b>&lt;15%</b>',
-    'Low - <b>&lt;30%</b>',
-    'Moderate - <b>&lt;45%</b>',
-    'Elevated - <b>&lt;60%</b>',
-    'High - <b>&lt;75%</b>',
-    'Critical - <b>&lt;90%</b>',
-  ];
-
-  div.innerHTML += '<div style="font-weight:bold; margin-bottom:6px;">Usage Legend</div>';
-  
-  for (let i = 0; i < thresholds.length; i++) {
-    div.innerHTML += `
-      <div style="display: flex; align-items: center; margin-bottom: 4px;">
-        <i style="
-          background: ${getColor(thresholds[i])};
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          margin-right: 8px;
-          border: 1px solid #bbb;
-          display: inline-block;
-        "></i>
-        <span>${labels[i]}</span>
-      </div>
-    `;
-  }
-  return div;
-};
-legend.addTo(map);
-
-
-// add a search control
-const searchInput = document.getElementById('searchInput');
-const suggestions = document.getElementById('suggestions');
-const modeRadios = document.querySelectorAll('input[name="searchMode"]');
-let deviceData = []; // store your loaded rows for search
-
-// Load data from Excel (reuse already loaded `rows`)
-function populateSearch(rows) {
-  deviceData = rows;
-
-  updateSuggestions(); // initial
-
-  searchInput.addEventListener('input', () => {
-    updateSuggestions(searchInput.value);
-  });
-
-  searchInput.addEventListener('change', () => {
-    const mode = getSearchMode();
-    const match = deviceData.find(r =>
-      (r[mode] || '').toLowerCase().includes(searchInput.value.toLowerCase())
-    );
-    if (match && match.Lat && match.Lon) {
-      map.setView([match.Lat, match.Lon], 15);
-      L.popup()
-        .setLatLng([match.Lat, match.Lon])
-        .setContent(`<strong>${match.Address}</strong><br>${match.Device_Entity_ID}`)
-        .openOn(map);
-    }
-  });
-
-  modeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateSuggestions(searchInput.value); // FIX HERE
-    });
-  });
-}
-function getSearchMode() {
-  return [...modeRadios].find(r => r.checked).value;
-}
-
-function updateSuggestions(term = '') {
-  const mode = getSearchMode();
-  const uniqueValues = [...new Set(
-    deviceData
-      .map(r => r[mode])
-      .filter(v => v && v.toLowerCase().includes(term.toLowerCase()))
-  )].slice(0, 10); // show top 10 matches
-
-  suggestions.innerHTML = '';
-  uniqueValues.forEach(val => {
-    const opt = document.createElement('option');
-    opt.value = val;
-    suggestions.appendChild(opt);
-  });
-}
-
-const searchControl = new L.Control.Search({
-  layer: window.fsaLayer,
-  propertyName: 'ZIP',
-  zoom: 12,
-  marker: false,
-  moveToLocation: function(latlng, title, map) {
-    map.setView(latlng, 12);
-    // add a popup to the marker
-    const popup = L.popup()
-      .setLatLng(latlng)
-      .setContent(title)
-      .openOn(map);
-  }
-});
-// add the search control to the map
-map.addControl(searchControl);
-// add a filter input
-const filterInput = document.getElementById('filterInput');
-const filterList = document.getElementById('filterList');
-const clearBtn = document.getElementById('clearBtn');
-const reportBox = document.getElementById('reportBox');
-const npopCount = document.getElementById('npopCount');
-const deviceCount = document.getElementById('deviceCount');
-const weekSelector = document.getElementById('weekSelector');
-const weekList = [];
-
-function getColor(d) {
-  return d >= 90  ? '#BD0026' :
-         d >= 75  ? '#E31A1C' :
-         d >= 60  ? '#FC4E2A' :
-         d >= 45  ? '#FD8D3C' :
-         d >= 30  ? '#FEB24C' :
-         d >= 15  ? '#FED976' :
-                    '#FFEDA0';
-}
-
-function drawMap(week) {
-    window.fsaLayer=L.geoJSON(geojsonData, {
-        style: f=> ( {
-            fillColor: getColor(usageByPostal[f.properties.ZIP]?.[week]||0), weight:1, color:'white', dashArray:'3', fillOpacity:0.7
-        }
-        ), onEachFeature: (f, l)=> l.bindPopup(`<b>ZIP:</b>$ {
-            f.properties.ZIP
-        }
-        <br><b>Usage($ {
-            week
-        }
-        ):</b>$ {
-            usageByPostal[f.properties.ZIP]?.[week]||0
-        }
-        %`)
-    }
-    ).addTo(map);
-  }
-  
-  // Load GeoJSON
-  // fetch('data/ontario_fsa_with_npop_count.geojson').then(r=>r.json()).then(d=>{geojsonData=d;});
-  fetch('data/lfsa000a21a_e.json')
-      .then(res => res.json())
-      .then(data => L.heatLayer(data, { radius: 25 }).addTo(map));
-  
-  // load your Excel summary
-  fetch('/data/capacity/capacity_summary.xlsx') .then(res=> res.arrayBuffer()) .then(ab=> {
-  // Read your sheet once…
-  const wb   = XLSX.read(ab, { type: 'array' });
-  const ws   = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws);
-
-  // Build a list of “raw” header keys and a human-friendly list
-  const weekKeys = Object
-    .keys(rows[0])
-    .filter(k => k.startsWith('% Used:'))
-    // e.g. ["% Used: jan6", "% Used: jan13", …]
-  ;
-  const weekList = weekKeys.map(k => 
-    k.replace('% Used: ', '').trim()
-    // e.g. ["jan6","jan13", …]
-  );
-
-  // Populate the <select> and set a default
-  const selector = document.getElementById('weekSelector');
-  weekList.forEach(w => {
-    const opt = document.createElement('option');
-    opt.value       = w;      // e.g. "mar31"
-    opt.textContent = w;      
-    selector.append(opt);
-  });
-
-  // pick the last week by default:
-  let currentWeek = weekList[ weekList.length - 1 ];
-  selector.value = currentWeek;
-
-  // Create a layerGroup to hold your markers
-  window.npopLayer = L.layerGroup().addTo(map);
-
-  // 5) Factor your draw logic into a function
-  function drawNpop(week) {
-    // clear out old circles
-    window.npopLayer.clearLayers();
-
-    const key = `% Used: ${week}`;
-    rows.forEach(r => {
-      const pct = Number(r[key]) || 0;
-      const lat = parseFloat(r.Lat);
-      const lon = parseFloat(r.Lon);
-      if (isNaN(lat) || isNaN(lon)) return;
-
-      L.circleMarker([lat, lon], {
-        radius: 5.5,
-        fillColor: getColor(pct),
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8,
-      })
-      .bindPopup(`
-        <table style="font-size:13px;border-collapse:collapse;width:100%">
-          <tr><td><strong>Device Group</strong></td><td>${r.Device_group}</td></tr>
-          <tr><td><strong>Location</strong></td><td>${r.Floor}</td></tr>
-          <tr><td><strong>Device Name</strong></td><td>${r.Name}</td></tr>
-          <tr><td><strong>Postal Code</strong></td><td>${r.Postal_code}</td></tr>
-          <tr><td><strong>City</strong></td><td>${r.City}</td></tr>
-          <tr><td><strong>Usage</strong></td><td>${pct}%</td></tr>
-        </table>
-      `)
-      .addTo(window.npopLayer);
-    });
-  }
-
-  // Initial draw
-  drawNpop(currentWeek);
-
-  // Re-draw whenever the selector changes
-  selector.addEventListener('change', e => {
-    currentWeek = e.target.value;
-    drawNpop(currentWeek);
-  });
-
-  });
-      // add a spiderfier to the markers
-      oms.addListener('click', function(marker, event) {
-        marker.openPopup();
-      });
-
-      // add a listener to the week selector
-      selector.addEventListener('change', function() {
-        currentWeek = this.value;
-        drawMap(currentWeek);
-        reportBox1.querySelector('span').textContent = usageByPostal[currentWeek]?.count || 0;
-        reportBox2.querySelector('span').textContent = usageByPostal[currentWeek]?.deviceCount || 0;
-      });
-
-      // draw the map for the first time
-      drawMap(currentWeek);
-      reportBox1.querySelector('span').textContent = usageByPostal[currentWeek]?.count || 0;
-      reportBox2.querySelector('span').textContent = usageByPostal[currentWeek]?.deviceCount || 0;
-
-      // add a filter input
-      filterInput.addEventListener('input', function() {
-        const term = this.value.toLowerCase();
-        const filteredRows = rows.filter(r => r.Name.toLowerCase().includes(term));
-        const uniqueNames = [...new Set(filteredRows.map(r => r.Name))];
-        filterList.innerHTML = '';
-        uniqueNames.forEach(name => {
-          const opt = document.createElement('option');
-          opt.value = name;
-          filterList.appendChild(opt);
-        });
-      });
-
-      clearBtn.addEventListener('click', function() {
-        filterInput.value = '';
-        filterList.innerHTML = '';
-      });
-
-
-</script> -->
-
 <script>
   // Initialize map
   const map = L.map('map').setView([43.7, -79.4], 10);
@@ -526,7 +235,6 @@ function drawMap(week) {
   }
 
   // Legend
-  // Legend (professional, modern style with unique icons for each label)
   const legend = L.control({ position: 'bottomright' });
   legend.onAdd = function () {
     const div = L.DomUtil.create('div', 'info legend');
@@ -597,6 +305,15 @@ function drawMap(week) {
   };
   legend.addTo(map);
 
+  // Add address icons
+  const addressIcon = (count) => L.divIcon({
+    className: 'address-icon',
+    html: count.toString(),
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+
   // Data containers
   let rows = [];
   window.npopLayer = L.layerGroup().addTo(map);
@@ -623,21 +340,33 @@ function drawMap(week) {
       const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
       if(isNaN(lat)||isNaN(lon)) return;
 
-      // Choose SVG icon based on usage
+      // Choose SVG icon based on usage and wrap in a container div for hover effects
       let svgIcon;
+      let iconColor, iconSVG;
       if (pct === 0) {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#b0b8c1" stroke="#fff" stroke-width="2"/><text x="10" y="14" text-anchor="middle" font-size="10" fill="#888" font-family="Arial" font-weight="bold">Ø</text></svg>`;
+        iconColor = "#b0b8c1";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#b0b8c1" stroke="#fff" stroke-width="1.2"/><text x="10" y="14" text-anchor="middle" font-size="8" fill="#888" font-family="Arial" font-weight="bold">Ø</text>`;
       } else if (pct <= 20) {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#43a047" stroke="#fff" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+        iconColor = "#43a047";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#43a047" stroke="#fff" stroke-width="1.2"/><path d="M6 10l3 3 5-5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
       } else if (pct <= 40) {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#cddc39" stroke="#fff" stroke-width="2"/><rect x="7" y="7" width="6" height="6" rx="2" fill="#fffde7" stroke="#bdbd2e" stroke-width="1"/></svg>`;
+        iconColor = "#cddc39";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#cddc39" stroke="#fff" stroke-width="1.2"/><rect x="7" y="7" width="6" height="6" rx="2" fill="#fffde7" stroke="#bdbd2e" stroke-width="0.8"/>`;
       } else if (pct <= 60) {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fdd835" stroke="#fff" stroke-width="2"/><path d="M10 5v5l4 2" stroke="#bfa600" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+        iconColor = "#fdd835";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#fdd835" stroke="#fff" stroke-width="1.2"/><path d="M10 5v5l4 2" stroke="#bfa600" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
       } else if (pct <= 80) {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#fb8c00" stroke="#fff" stroke-width="2"/><polygon points="10,5 13,15 7,15" fill="#fff3e0" stroke="#e65100" stroke-width="1"/></svg>`;
+        iconColor = "#fb8c00";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#fb8c00" stroke="#fff" stroke-width="1.2"/><polygon points="10,5 13,15 7,15" fill="#fff3e0" stroke="#e65100" stroke-width="0.8"/>`;
       } else {
-        svgIcon = `<svg width="28" height="28" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#e53935" stroke="#fff" stroke-width="2"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
+        iconColor = "#e53935";
+        iconSVG = `<circle cx="10" cy="10" r="8" fill="#e53935" stroke="#fff" stroke-width="1.2"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`;
       }
+      svgIcon = `
+        <div class="icon-container" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 20 20" style="display:block;">${iconSVG}</svg>
+        </div>
+      `;
 
       const m = L.marker([lat, lon], {
         icon: L.divIcon({
@@ -648,9 +377,18 @@ function drawMap(week) {
           popupAnchor: [0, -12]
         })
       });
-     m.on('click', function(e) { m.openPopup(); }); m.on('mouseover', function(e) { m.setStyle({ radius: 8, weight: 2, color: '#222' }); m.bringToFront();}); m.on('mouseout', function(e) { m.setStyle({ radius: 5.5, weight: 1, color: '#333' }); });
 
-      m.options.props = r;
+      // add effects
+      m.setOpacity(0.8);
+      m.setZIndexOffset(1000);
+      m.on('click', function(e) { 
+        m.openPopup(); }); 
+        m.on('mouseover', function(e) { 
+          m.setStyle({ radius: 8, weight: 2, color: '#222' }); 
+          m.bringToFront();}); 
+          m.on('mouseout', function(e) { 
+            m.setStyle({ radius: 5.5, weight: 1, color: '#333' }); });
+            m.options.props = r;
       m.bindPopup(
         `
         <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
@@ -677,25 +415,62 @@ function drawMap(week) {
           font-size:13px;
           font-weight:700;
           margin-left:10px;
+          color:#222;
+          background:transparent;
+          border-radius:5px;
+          padding:0;
+          border:none;
+          box-shadow:none;
+          text-shadow:none;
+          letter-spacing:0px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          min-width:0;
+          text-align:left;
+          margin-left:10px;
+          margin-right:0;
+          line-height:1.2;
+          ">
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:400;
+            color:#555;
+            margin-left:0;
+            padding-left:0;
+            white-space:normal;
+            word-break:break-word;
+            vertical-align:middle;
+            max-width:140px;
+            ">
+            ${r.Address || ''}
+          </span>
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:700;
             color:#222;
             background:${getColor(pct)}CC;
             ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
-          border-radius:5px;
-          padding:3px 2px;
-          border:1.5px solid #fff;
-          box-shadow:0 1px 4px rgba(0,0,0,0.10);
-          text-shadow:0 1px 2px #fff;
-          letter-spacing:0px;
-              ">
-          ${pct}%
-              </span>
-            </span>
-          </div>
+            border-radius:5px;
+            padding:3px 12px;
+            border:1.5px solid #fff;
+            box-shadow:0 1px 4px rgba(0,0,0,0.10);
+            text-shadow:0 1px 2px #fff;
+            letter-spacing:0px;
+            min-width:44px;
+            text-align:center;
+            margin-left:12px;
+            margin-right:0;
+            line-height:1.2;
+          ">
+            ${pct}%
+          </span>
+          </span>
         </div>
-          <div style="margin-bottom:6px;">
-        <span style="color:#555;">${r.Address || ''}</span>
-          </div>
-          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <tr>
           <td style="padding:4px 8px;color:#888;">Entity ID</td>
           <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
