@@ -2,6 +2,7 @@
 
 - Uses **Leaflet** with OpenStreetMap base layer + Satellite imagery option  
 - Supports **zooming**, **panning**, and **layer toggling**
+- Explore via: [Interactive Map](https://kristiehu.github.io/Leaflet-Npop-Map/main/) 🌍
 
 ---
 
