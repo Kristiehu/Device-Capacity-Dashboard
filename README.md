@@ -10,7 +10,7 @@
 
 - **Name:** [Kristie Hu](https://www.kristiehu.com/) - [Github](https://github.com/Kristiehu)
 - **Version:** 1.0.0
-- **Date:** 2025-05-13
+- **Date:** 2025-05-20
 
 ---
 
