@@ -4,7 +4,7 @@
 - Supports **zooming**, **panning**, and **layer toggling**
 - Explore via: [NPOP Map](https://kristiehu.github.io/Leaflet-Npop-Map/main/) 🌍
                [Device Capacity Reporting Dashboard](https://kristiehu.github.io/Leaflet-Npop-Map/main/capacityReport.html) 📊
-               [Device Only Page](https://kristiehu.github.io/Leaflet-Npop-Map/main/capacityReport.html) 🔧
+               [Device INnfo Tracker](https://kristiehu.github.io/Leaflet-Npop-Map/main/capacityReport.html) 🔧
 
 ---
 
