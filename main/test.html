@@ -1,48 +1,277 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Leaflet Map with Multiple Polygon Layers and Satellite Basemap</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <meta charset="utf-8"/>
+  <title>Leaflet – NPOP Distribution Map</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+
+  <!-- Styles for map, controls, and UI elements -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.css"/>
   <style>
-    #map { height: 600px; }
+    html, body, #map {
+      height: 100%;  /* Full-screen map */
+      margin: 0;
+      padding: 0;
+    }
+    .reportCluster {
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 70%, rgba(230,245,255,0.85) 100%);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 12px;
+      color: #222;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+      border: 1px solid #e0e7ef;
+      position: relative;
+      z-index: 1000;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .reportCluster:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
+      border: 1.5px solid #b3d4fc;
+    }
+    
+    #reportTitle {
+      box-sizing: content-box;
+      position: absolute;
+      top: 10px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 1000;
+      font-size: 24px;
+      font-weight: bold;
+      color: black;
+      text-shadow:
+        -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white,
+        -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
+    }
+    #controlsContainer {
+      position: absolute;
+      top: 12px;
+      left: 50px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.8);
+      width: 250px;
+      font-family: sans-serif;
+      font-size: 12px;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #filterContainer {
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+      width: 240px;
+      gap: 4px;
+    }
+    #filterInput {
+      flex: 1;
+      padding: 4px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+    #clearBtn {
+      background: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #clearBtn:hover {
+      background: #ccc;
+    }
   </style>
-</head>
+
 <body>
-  <h3>Leaflet Map with Polygon GeoJSON Layers & Satellite Basemap</h3>
+  <div id="reportTitle">Npop Count & Distribution Report</div>
+  <div id="controlsContainer">
+    <div id="reportBox" class="reportCluster">
+      Showing total npop count by city: <strong><span id="npopCount">0</span></strong>
+    </div>
+    <div id="filterContainer">
+      <input id="filterInput" list="filterList" placeholder="Filter by name..." />
+      <button id="clearBtn" title="Clear filter">×</button>
+    </div>
+    <datalist id="filterList"></datalist>
+  </div>
   <div id="map"></div>
+  <div style="position: absolute; bottom: 10px; left: 10px; font-size: 15px; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; z-index: 1000;">
+    <em>A sample interactive map by <strong>Kristie Hu</strong></em>
+  </div>
+
+  <!-- External JS libraries -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.js"></script>
 
   <script>
-    const map = L.map('map').setView([43.7, -79.4], 10);
+    (async function initMap() {
+      const map = L.map('map').setView([43.7, -79.4], 10);
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
+      const satellite = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { attribution: '© Esri', maxZoom: 19 }
+      );
+      osm.addTo(map);
+      L.control.layers({ 'OSM': osm, 'Satellite': satellite }, {}, { collapsed: false }).addTo(map);
 
-    // Base Layers
-    const osmBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const satelliteBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles © Esri'
-    });
+      // Heatmap & clustering
+      let heatPoints = [], heatLayer;
+      const heatThreshold = 13;
+      const heatGradient = { 0.1: 'rgba(0,0,255,0.2)', 0.3: 'rgba(0,255,0,0.3)', 0.5: 'rgba(255,255,0,0.4)', 0.7: 'rgba(255,165,0,0.5)', 1.0: 'rgba(255,0,0,0.6)' };
+      const markers = L.markerClusterGroup();
 
-    const baseMaps = {
-      "OpenStreetMap": osmBase,
-      "Satellite": satelliteBase
-    };
+      // FSA layer control
+      const fsaThreshold = 17;
+      let fsaLayers = [];
 
-    // GeoJSON Layers
-    const polygonLayer1 = omnivore.geojson('data/npops_buildings.json')
-      .on('ready', function() {
-        map.fitBounds(polygonLayer1.getBounds());
+      // UI refs
+      const npopCountEl = document.getElementById('npopCount');
+      const filterInput = document.getElementById('filterInput');
+      const filterList = document.getElementById('filterList');
+      const clearBtn = document.getElementById('clearBtn');
+
+      // Load CSV
+      const parsedData = await new Promise(resolve => {
+        Papa.parse('data/npop_points.csv', { header: true, download: true, complete: ({ data }) => resolve(data) });
       });
 
-    const polygonLayer2 = omnivore.geojson('data/ontario_fsa_with_npop_count.geojson');
+      // Populate markers & suggestions
+      const suggestionSet = new Set();
+      parsedData.forEach(record => {
+        const lat = +record.y, lon = +record.x;
+        if (!isNaN(lat) && !isNaN(lon)) {
+          const title = record.name || 'n/a'; suggestionSet.add(title);
+          const mk = L.marker([lat, lon], { title }).bindPopup(`<strong>${title}</strong><br>${record.address||'n/a'}`);
+          markers.addLayer(mk);
+          heatPoints.push([lat, lon, 1]);
+        }
+      });
 
-    const overlayMaps = {
-      "Polygon Layer 1": polygonLayer1,
-      "Polygon Layer 2": polygonLayer2
-    };
+      map.addLayer(markers);
+      updateHeat();
+      npopCountEl.textContent = markers.getLayers().length;
 
-    L.control.layers(baseMaps, overlayMaps).addTo(map);
+      Array.from(suggestionSet).sort().forEach(name => {
+        const option = document.createElement('option'); option.value = name; filterList.appendChild(option);
+      });
+
+      function applyFilter() {
+        const val = filterInput.value.toLowerCase();
+        markers.clearLayers(); heatPoints = []; npopCountEl.textContent = 0;
+        parsedData.forEach(r => { if ((r.name||'').toLowerCase().includes(val)) {
+            const lat=+r.y, lon=+r.x;
+            const mk = L.marker([lat, lon], { title: r.name }).bindPopup(`<strong>${r.name}</strong><br>${r.address||'n/a'}`);
+            markers.addLayer(mk); heatPoints.push([lat, lon, 1]);
+          }
+        });
+        if (markers.getLayers().length) {
+          map.fitBounds(L.featureGroup(markers.getLayers()).getBounds());
+        } else map.setView([43.7, -79.4], 10);
+        npopCountEl.textContent = markers.getLayers().length;
+        updateHeat();
+      }
+      filterInput.addEventListener('input', applyFilter);
+      clearBtn.addEventListener('click', () => { filterInput.value = ''; applyFilter(); });
+
+      function updateHeat() {
+        if (heatLayer) map.removeLayer(heatLayer);
+        heatLayer = L.heatLayer(heatPoints, { radius: 50, blur: 30, minOpacity: 0.3, gradient: heatGradient });
+        if (map.getZoom() <= heatThreshold) map.addLayer(heatLayer);
+      }
+      map.on('zoomend', () => {
+        const z = map.getZoom();
+        if (z > heatThreshold) map.removeLayer(heatLayer);
+        else if (heatLayer) map.addLayer(heatLayer);
+        // Toggle FSA layers
+        fsaLayers.forEach(layer => {
+          if (z > fsaThreshold) map.removeLayer(layer);
+          else map.addLayer(layer);
+        });
+      });
+
+      // Report controls
+      const fsaControl = L.control({ position: 'topright' });
+      fsaControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(
+        document.createTextNode('Hover over an area to see detailed FSA info.')
+      ).parentNode; fsaControl.addTo(map);
+      const bldgControl = L.control({ position: 'topright' });
+      bldgControl.onAdd = () => L.DomUtil.create('div', 'reportCluster').appendChild(
+        document.createTextNode('Click on a building to see detailed info.')
+      ).parentNode; bldgControl.addTo(map);
+
+      // Load FSA shapefiles
+      const fsaConfigs = [
+        { zip: 'data/ontario_fsa.zip', label: 'Ontario FSA', style: { color: '#888', weight: 2, opacity: 0.15 } },
+        { zip: 'data/quebec_fsa.zip', label: 'Quebec FSA', style: { color: '#888', weight: 2, opacity: 0.15 } }
+      ];
+      fsaConfigs.forEach(({ zip, label, style }) => {
+        shp(zip).then(geojson => {
+          const layer = L.geoJSON(geojson, {
+            style,
+            onEachFeature: (feature, lyr) => {
+              lyr.on('mouseover', e => {
+                highlightFeatureStyle(e.target, style);
+                const props = feature.properties;
+                fsaControl.getContainer().innerHTML =
+                  `<strong>${props.PRNAME||'n/a'} – <i>${props.CFSAUID||'n/a'}</i></strong><br>` +
+                  `DGUID: ${props.DGUID||'n/a'}<br>` +
+                  `Land area: ${props.LANDAREA||'—'}<br>` +
+                  `NPOP Count: <strong>${props.npop_count||'n/a'}</strong>`;
+              });
+              lyr.on('mouseout', () => {
+                lyr.setStyle(style);
+                fsaControl.getContainer().innerHTML = 'Hover over an area to see detailed FSA info.';
+              });
+            }
+          }).addTo(map);
+          fsaLayers.push(layer);
+          L.control.layers().addOverlay(layer, label);
+        }).catch(err => console.error(`${label} load error`, err));
+      });
+
+      // Building layer
+      fetch('data/npop_buildings.json')
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+          const bldgLayer = L.geoJSON(data, {
+            style: { color: '#e555f6', weight: 3, opacity: 0.8, fillOpacity: 0.2 },
+            onEachFeature: (feature, lyr) => {
+              lyr.on('click', () => {
+                const props = feature.properties;
+                bldgControl.getContainer().innerHTML =
+                  `<strong>${props.name||'n/a'}</strong><br>` +
+                  `${props.entityId||'n/a'}<br>` +
+                  `${props.description||'n/a'}`;
+              });
+            }
+          }).addTo(map);
+          L.control.layers().addOverlay(bldgLayer, 'Buildings');
+        })
+        .catch(err => console.error('Buildings load error', err));
+
+      // Highlight style helper
+      function highlightFeatureStyle(layer, baseStyle) {
+        layer.setStyle({ weight: (baseStyle.weight||2) + 3, color: '#02c002', fillOpacity: (baseStyle.opacity||0.3) + 0.2 });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+      }
+
+    })();
   </script>
+  </head>
 </body>
 </html>
