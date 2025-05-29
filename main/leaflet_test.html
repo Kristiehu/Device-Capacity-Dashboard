@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html>
+<head> <!-- Leaflet Map with CSV, Shapefiles, Heatmap, Search, Report, and Filter -->
+  <meta charset="utf-8"/>
+  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles + Search + Report + Filter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+
+  <!-- Styles for map, controls, and UI elements -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.css"/>
+  <style> /* Basic styles for the map and body */
+
+  #reportTitle {
+    font-size: 24px;
+    font-weight: 800;
+    color: #2a4b7c;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  html, body, #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 0;
+    }
+    #topControls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      display: 100%;
+      flex-wrap: wrap;
+      gap: 14px;
+      background: rgba(255,255,255,0.95);
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .reportCluster {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 70%, rgba(230, 245, 255, 0.85) 100%);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #222;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+      border: 1px solid #e0e7ef;
+      min-width: 220px;
+      max-width: 260px;
+    }
+
+  #searchContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+  }
+
+  .custom-icon {
+    border: none;
+    background: transparent;
+  }
+
+  #searchContainer input[type="text"] {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  #searchContainer label {
+    font-size: 12px;
+    color: #333;
+  }
+
+  #weekSelector {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+    background: #fff;
+    font-size: 13px;
+    width: 100%;
+  }
+
+    .reportCluster {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 70%, rgba(230, 245, 255, 0.85) 100%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 12px;
+        color: #222;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+        border: 1px solid #e0e7ef;
+        position: relative;
+        z-index: 1000;
+        transition: box-shadow 0.2s, border 0.2s;
+    }
+
+    .reportCluster:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
+        border: 1.5px solid #b3d4fc;
+    }
+
+    /* Legend container */
+
+    .info.legend {
+      padding: 22px 30px 18px 30px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(42,75,124,0.13), 0 1.5px 4px rgba(0,120,255,0.07);
+      border-radius: 12px;
+      color: #23272f;
+      border: 1.5px solid #e0e7ef;
+      letter-spacing: 0.1px;
+      min-width: 210px;
+      max-width: 320px;
+    }
+
+    .info.legend i {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      margin-right: 12px;
+      opacity: 0.85;
+      border-radius: 50%;
+      vertical-align: middle;
+      border: 1.5px solid #e0e7ef;
+      box-shadow: 0 1px 3px rgba(42,75,124,0.08);
+    }
+
+
+    #controlsContainer {
+        position: absolute;
+        top: 12px;
+        left: 50px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.8);
+        width: 260px;
+        font-family: sans-serif;
+        font-size: 12px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    /* constrain popup width */
+.leaflet-popup-content-wrapper .popup-group {
+  max-width: 260px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+}
+
+.leaflet-popup-content-wrapper .device-entry {
+  margin-bottom: 8px;
+}
+
+.leaflet-popup-content-wrapper .device-entry h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #007bff;
+}
+
+.leaflet-popup-content-wrapper .device-entry p {
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+.leaflet-popup-content-wrapper hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 6px 0;
+}
+
+.device-dot {
+  width: 10px; height: 10px;
+  background: rgba(255, 165, 0, 0.8);
+  border: 1px solid white;
+  border-radius: 50%;
+}
+
+    #filterContainer {
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        border-radius: 4px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        gap: 4px;
+    }
+
+    #filterInput {
+        flex: 1;
+        padding: 4px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #clearBtn {
+        background: #e0e0e0;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    #clearBtn:hover {
+        background: #ccc;
+    }
+
+
+  </style>
+</head>
+<body> <!-- Leaflet Map -->
+
+ <div id="topControls">
+    <div id="searchContainer" style="display:flex;flex-direction:column;gap:6px;min-width:200px;">
+      <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" style="padding:6px 10px;border:1px solid #ccc;border-radius:5px;" />
+      <datalist id="suggestions"></datalist>
+      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <label style="font-size:12px;"><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
+          <label style="font-size:12px;"><input type="radio" name="searchMode" value="Address" /> Address</label>
+        </div>
+        <button id="searchBtn" style="padding:4px 14px;font-size:13px;border-radius:5px;border:1px solid #1976d2;background:#2196f3;color:#fff;cursor:pointer;margin-left:auto;">Search</button>
+      </div>
+    </div>
+
+    <div style="padding: 12px;">
+      <div id="reportBox1" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
+          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count in City:<br/>
+              <strong><span id="npopCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
+          </div>
+      </div>
+    </div>
+
+    <div style="padding: 12px;">
+      <div id="reportBox2" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
+          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count at Address:<br/>
+              <strong><span id="deviceCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
+          </div>
+      </div>
+    </div>
+
+    <div style="padding: 12px;">
+      <div id="reportBox3" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
+          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Filter by Weekly Usage</div>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;">
+              <label for="weekSelector" style="font-size:13px;color:#444;">Week:</label>
+              <select id="weekSelector" style="padding:4px 10px;font-size:13px;border-radius:5px;border:1px solid #b3c6e0;background:#f7fbff;color:#2a4b7c;font-weight:500;box-shadow:0 1px 3px rgba(42,75,124,0.06);"></select>
+          </div>
+          <datalist id="filterList"></datalist>
+      </div>
+    </div>
+</div>
+  
+  <div id="map" style="position:absolute;top:0px;left:0;right:0;bottom:0;z-index:0;"></div>
+  <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 20px; background: linear-gradient(90deg, #f8fafc 60%, #e3f0ff 100%); padding: 12px 36px 12px 24px; border-radius: 14px; box-shadow: 0 4px 24px rgba(42,75,124,0.13), 0 1.5px 4px rgba(0,120,255,0.07); color: #1a2a4b; z-index: 1201; font-family: 'Segoe UI', Arial, sans-serif; letter-spacing: 0.2px; font-weight: 700; display: flex; align-items: center; gap: 14px; border: 1.5px solid #e0e7ef;">
+    <svg width="32" height="32" viewBox="0 0 32 32" style="vertical-align:middle">
+      <g>
+        <rect x="4" y="18" width="5" height="8" rx="2" fill="#2196f3"/>
+        <rect x="13.5" y="12" width="5" height="14" rx="2" fill="#43a047"/>
+        <rect x="23" y="7" width="5" height="19" rx="2" fill="#fb8c00"/>
+        <circle cx="16" cy="16" r="15" fill="none" stroke="#1976d2" stroke-width="2"/>
+      </g>
+    </svg>
+    <span>
+      Interactive Device Capacity Reporting Dashboard
+    </span>
+  </div>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <!-- OverlappingMarkerSpiderfier -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OverlappingMarkerSpiderfier-Leaflet/0.2.6/oms.min.js"></script>
+
+  <!-- External JS libraries -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.js"></script>
+
+  <!-- XLSX library for reading Excel files -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+
+  // Initialize map
+  const map = L.map('map', {
+    zoomControl: false}).setView([43.7, -79.4], 10);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
+  L.control.zoom({ position: 'topleft' }).addTo(map);
+
+
+  // Gradient color scheme: 0 = special color, then green → yellow-green → yellow → orange → red
+  function getColor(d) {
+    if (d === 0) return '#b0b8c1'; // No Usage (light gray-blue)
+    if (d <= 20) return '#43a047'; // <=20% (green)
+    if (d <= 40) return '#cddc39'; // <=40% (yellow-green)
+    if (d <= 60) return '#fdd835'; // <=60% (yellow)
+    if (d <= 80) return '#fb8c00'; // <=80% (orange)
+    if (d >  80) return '#e53935'; // <=100% (red)
+    return '#b0b8c1'; // fallback
+  }
+
+  // Legend
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'info legend');
+    const grades = [0, 20, 40, 60, 80, 100];
+    const labels = [
+      { icon: '<i style="background:#b0b8c1"></i>', text: '0% -  No Usage' },
+      { icon: '<i style="background:#43a047"></i>', text: '1% - 20% -  Very Low' },
+      { icon: '<i style="background:#cddc39"></i>', text: '21 - 40% -  Low' },
+      { icon: '<i style="background:#fdd835"></i>', text: '41 - 60% -  Moderate' },
+      { icon: '<i style="background:#fb8c00"></i>', text: '61 - 80% -  High' },
+      { icon: '<i style="background:#e53935"></i>', text: '81 - 100% -  Critical' }
+    ];
+    div.innerHTML = `
+      <div style="
+        font-weight:700;
+        font-size:15px;
+        margin-bottom:8px;
+        color:#23272f;
+        letter-spacing:0.1px;
+        text-align:left;
+      ">
+        <span style="display:inline-block;vertical-align:middle;margin-right:6px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" style="vertical-align:middle">
+            <defs>
+              <radialGradient id="legendGlow" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#fff176" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#fb8c00" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#e53935" stop-opacity="1"/>
+              </radialGradient>
+            </defs>
+            <circle cx="11" cy="11" r="9" fill="url(#legendGlow)" stroke="#23272f" stroke-width="1.5"/>
+            <path d="M11 5.5v6" stroke="#23272f" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="11" cy="15.5" r="1.2" fill="#23272f"/>
+          </svg>
+        </span>
+        Usage Legend
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+    `;
+    labels.forEach((obj, i) => {
+      div.innerHTML += `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-block;vertical-align:middle;">${obj.icon}</span>
+          <span style="font-size:13px;line-height:1.2;">${obj.text}</span>
+        </div>
+      `;
+    });
+    div.innerHTML += '</div>';
+    // Ensure legend is always fully visible above the bottom bar
+    div.style.marginBottom = '60px';
+    return div;
+  };
+  legend.addTo(map);
+
+  // Add address icons
+  const addressIcon = (count) => L.divIcon({
+    className: 'address-icon',
+    html: count.toString(),
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+
+
+  // Data containers
+  let rows = [];
+  let currentDeviceLayer = L.layerGroup().addTo(map);
+  const addressLayer = L.layerGroup().addTo(map);
+
+  // Load Excel & prepare weeks
+  fetch('data/capacity/capacity_summary.xlsx').then(r=>r.arrayBuffer()).then(ab=>{
+    const wb = XLSX.read(ab,{type:'array'});
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    // Populate search suggestions
+    searchData.Device_Entity_ID = [...new Set(rows.map(r => r.Device_Entity_ID).filter(Boolean))].sort();
+    searchData.Address = [...new Set(rows.map(r => r.Address).filter(Boolean))].sort();
+    updateSuggestions();
+
+    const weekKeys = Object.keys(rows[0]).filter(k=>k.startsWith('% Used:'));
+    const weeks = weekKeys.map(k=>k.replace('% Used: ','').trim());
+    const sel = document.getElementById('weekSelector');
+    weeks.forEach(w=>{const o=document.createElement('option'); o.value = o.textContent = w; sel.append(o);});
+    sel.value = weeks[weeks.length-1];
+    drawNpop(sel.value);
+    drawAddressSummary();
+    sel.addEventListener('change', () => {
+      drawNpop(sel.value);
+      drawAddressSummary();
+});
+
+  });
+
+  // Draw NPOP markers for a given week
+  function drawNpop(week){
+    // window.npopLayer.clearLayers();
+    const key = `% Used: ${week}`;
+    rows.forEach(r=>{
+      const pct = Number(r[key]) || 0;
+      const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+      if(isNaN(lat)||isNaN(lon)) return;
+
+      // Choose SVG icon based on usage and wrap in a container div for hover effects
+      let svgIcon = `
+        <div style="
+          width:12px;
+          height:12px;
+          border-radius:50%;
+          background:${getColor(pct)};
+          border:1.5px solid #fff;
+          box-shadow:0 1px 2px rgba(0,0,0,0.10);
+          display:inline-block;
+          transition: box-shadow 0.2s, border 0.2s, transform 0.2s;
+        "></div>
+      `;
+      const m = L.circleMarker([lat, lon], {
+        radius: 7,
+        fillColor: getColor(pct),
+        color: '#fff',
+        weight: 1.5,
+        opacity: 1,
+        fillOpacity: 0.95
+      });
+      m.options.props = r;
+      m.bindPopup(
+        `
+        <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="
+              display:inline-block;
+              width:100%;
+              box-sizing:border-box;
+              padding:5px 0 5px 12px;
+              border-radius:6px 6px 0 0;
+              background: linear-gradient(90deg, #e9ecef 0%, #f8fafc 100%);
+              box-shadow: none;
+              font-size:16px;
+              font-weight:700;
+              color:#23272f;
+              letter-spacing:0.2px;
+              border: none;
+              text-shadow:none;
+              margin:0;
+              transition:background 0.3s;
+            ">
+              ${r.Name || 'Device'}
+              <span style="
+          font-size:13px;
+          font-weight:700;
+          margin-left:10px;
+          color:#222;
+          background:transparent;
+          border-radius:5px;
+          padding:0;
+          border:none;
+          box-shadow:none;
+          text-shadow:none;
+          letter-spacing:0px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          min-width:0;
+          text-align:left;
+          margin-left:10px;
+          margin-right:0;
+          line-height:1.2;
+          ">
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:400;
+            color:#555;
+            margin-left:0;
+            padding-left:0;
+            white-space:normal;
+            word-break:break-word;
+            vertical-align:middle;
+            max-width:140px;
+            ">
+            ${r.Address || ''}
+          </span>
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:700;
+            color:#222;
+            background:${getColor(pct)}CC;
+            ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
+            border-radius:5px;
+            padding:3px 12px;
+            border:1.5px solid #fff;
+            box-shadow:0 1px 4px rgba(0,0,0,0.10);
+            text-shadow:0 1px 2px #fff;
+            letter-spacing:0px;
+            min-width:44px;
+            text-align:center;
+            margin-left:12px;
+            margin-right:0;
+            line-height:1.2;
+          ">
+            ${pct}%
+          </span>
+          </span>
+        </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Entity ID</td>
+          <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Device Group</td>
+          <td style="padding:4px 8px;">${r.Device_group}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Location</td>
+          <td style="padding:4px 8px;">${r.Floor}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Postal Code</td>
+          <td style="padding:4px 8px;">${r.Postal_code}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">City</td>
+          <td style="padding:4px 8px;">${r.City}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Usage</td>
+          <td style="padding:4px 8px;font-weight:bold;color:${getColor(pct)}">${pct}%</td>
+        </tr>
+          </table>
+        </div>
+        `
+      );
+      m.on('click', e => {
+        const popup = e.target.getPopup();
+        if (popup) {
+          popup.setLatLng(e.latlng);
+          popup.openOn(map);
+        }
+      });
+      // window.npopLayer.addLayer(m);
+    });
+  }
+
+
+
+// Add reset and export buttons to UI
+const resetBtn = document.createElement('button');
+resetBtn.textContent = 'Collapse All';
+resetBtn.style.cssText = 'margin-top:6px;padding:8px 16px;font-size:13px;border:none;border-radius:5px;background:#ffc107;color:#222;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.1);';
+resetBtn.addEventListener('mouseover', () => resetBtn.style.background = '#ffb300');
+resetBtn.addEventListener('mouseout', () => resetBtn.style.background = '#ffc107');
+
+const exportBtn = document.createElement('button');
+exportBtn.textContent = 'Export CSV';
+exportBtn.style.cssText = 'margin-top:6px;padding:8px 16px;font-size:13px;border:none;border-radius:5px;background:#28a745;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.1);';
+
+const summaryPanel = document.createElement('div');
+summaryPanel.style.cssText = 'position:flex;bottom:10px;left:10px;z-index:1000;padding:10px 14px;font-size:13px;background:white;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);max-height:300px;overflow:auto;width:300px;';
+document.body.appendChild(summaryPanel);
+
+let lastOpenedGroupKey = null;
+
+// Add buttons to the UI (e.g., to the searchContainer)
+const searchContainer = document.getElementById('searchContainer');
+if (searchContainer) {
+  searchContainer.appendChild(resetBtn);
+  searchContainer.appendChild(exportBtn);
+}
+
+resetBtn.addEventListener('click', () => {
+  // Clear search input and suggestions
+  searchInput.value = '';
+  updateSuggestions();
+  // Reset week selector to latest week
+  const sel = document.getElementById('weekSelector');
+  if (sel && sel.options.length > 0) {
+    sel.value = sel.options[sel.options.length - 1].value;
+  }
+  // Redraw all device markers and address summary
+  drawNpop(sel.value);
+  drawAddressSummary();
+  // Clear device layer and summary
+  currentDeviceLayer.clearLayers();
+  lastOpenedGroupKey = null;
+  // Reset counts
+  document.getElementById('deviceCount').textContent = '0';
+  document.getElementById('npopCount').textContent = '0';
+  // Reset map view to initial
+  map.setView([43.7, -79.4], 10);
+});
+
+// Search functionality
+const searchMode = document.querySelector('input[name="searchMode"]:checked');
+const filterInput = document.getElementById('filterInput');
+const filterList = document.getElementById('filterList');
+const clearBtn = document.getElementById('clearBtn');
+const searchLayer = L.layerGroup().addTo(map);
+const detailBtn = document.createElement('button');
+// Create a standalone button container at the top right of the map
+const detailBtnContainer = document.createElement('div');
+detailBtnContainer.style.cssText = `
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+// Create the button
+detailBtn.textContent = 'Device Info Page';
+detailBtn.style.cssText = `
+  margin-top: 4px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
+  letter-spacing: 0.2px;
+  transition: background 0.2s, box-shadow 0.2s;
+`;
+detailBtn.onmouseover = () => detailBtn.style.background = '#000000';
+detailBtn.onmouseout = () => detailBtn.style.background = '#000fff';
+
+detailBtnContainer.appendChild(detailBtn);
+document.body.appendChild(detailBtnContainer);
+
+detailBtn.addEventListener('click', () => {
+  window.location.href = 'devices_only.html';
+});
+
+
+
+
+function drawAddressSummary() {
+
+  currentDeviceLayer.clearLayers();
+  addressLayer.clearLayers();
+
+  // Reposition and style the summary panel for bottom-left
+  summaryPanel.style.position = 'absolute';
+  summaryPanel.style.bottom = '12px';
+  summaryPanel.style.left = '12px';
+  summaryPanel.style.zIndex = '1000';
+  summaryPanel.style.maxHeight = '300px';
+  summaryPanel.style.overflowY = 'auto';
+  summaryPanel.style.width = '400px';
+  summaryPanel.style.background = 'white';
+  summaryPanel.style.borderRadius = '8px';
+  summaryPanel.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  summaryPanel.style.padding = '8px';
+
+  // Create collapsible summary panel (collapsed by default)
+  summaryPanel.innerHTML = `
+    <details>
+      <summary id="addressSummarySummary" style="
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 6px 12px;
+        background: linear-gradient(90deg, #f8fafc, #e9ecef);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        color: #2a4b7c;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        letter-spacing: 0.3px;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        z-index: 2000;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        position: relative;
+      ">
+        <span style="display:inline-block;vertical-align:middle;margin-right:10px;">
+          <svg width="18" height="18" viewBox="0 0 20 20" style="vertical-align:middle">
+            <circle cx="10" cy="10" r="8" fill="#1976d2" stroke="#1565c0" stroke-width="2"/>
+            <path d="M10 5v5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="10" cy="13.5" r="1.2" fill="#fff"/>
+          </svg>
+        </span>
+        Address Summary
+      </summary>
+      <div id="summaryContent" style="padding: 8px 12px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #333;"></div>
+    </details>
+  `;
+
+  // Add hover effect for the summary bar
+  const addressSummarySummary = summaryPanel.querySelector('#addressSummarySummary');
+  if (addressSummarySummary) {
+    addressSummarySummary.addEventListener('mouseover', function() {
+      this.style.background = 'linear-gradient(90deg, #e3f2fd, #bbdefb)';
+      this.style.color = '#1565c0';
+      this.style.boxShadow = '0 4px 16px rgba(25, 118, 210, 0.18), 0 2px 8px rgba(21,101,192,0.10)';
+      this.style.zIndex = '3000';
+    });
+    addressSummarySummary.addEventListener('mouseout', function() {
+      this.style.background = 'linear-gradient(90deg, #f8fafc, #e9ecef)';
+      this.style.color = '#2a4b7c';
+      this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      this.style.zIndex = '2000';
+    });
+  }
+
+  // Hide the default dropdown arrow for <summary> (cross-browser)
+  const details = summaryPanel.querySelector('details');
+  if (details) {
+    details.style.listStyle = 'none';
+  }
+  const summary = summaryPanel.querySelector('summary');
+  if (summary) {
+    summary.style.listStyle = 'none';
+    summary.style.webkitUserSelect = 'none';
+    summary.style.mozUserSelect = 'none';
+    summary.style.userSelect = 'none';
+  }
+
+  const summaryContent = document.getElementById('summaryContent');
+  const week = document.getElementById('weekSelector').value;
+  const key = `% Used: ${week}`;
+  const addressGroups = {};
+  const oms = new OverlappingMarkerSpiderfier(map);
+  const clusterGroup = L.markerClusterGroup();
+
+  rows.forEach(r => {
+    const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+    const addr = r.Address;
+    if (isNaN(lat) || isNaN(lon) || !addr) return;
+    const groupKey = addr + '_' + lat + '_' + lon;
+    const usage = parseFloat(r[key]) || 0;
+
+    if (!addressGroups[groupKey]) {
+      addressGroups[groupKey] = {
+        lat, lon, address: addr, devices: [],
+        usageTotal: 0, count: 0
+      };
+    }
+
+    addressGroups[groupKey].devices.push(r);
+    addressGroups[groupKey].usageTotal += usage;
+    addressGroups[groupKey].count += 1;
+  });
+
+  // Sort addresses by avg usage descending
+  const sortedGroups = 
+  Object.entries(addressGroups).sort(([, a], [, b]) => 
+  (b.usageTotal / b.count) - (a.usageTotal / a.count));
+
+  const exportData = [];
+
+  let totalDevices = 0;
+
+  sortedGroups.forEach(([groupKey, group]) => {
+    const avg = (group.usageTotal / group.count).toFixed(1);
+    const color = getColor(avg);
+    const address = group.address;
+    totalDevices += group.count;
+
+    const marker = L.marker([group.lat, group.lon], {
+      icon: L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background:${color};color:white;border: 2px solid #fff; border-radius:50%;width:34px;height:34px;line-height:34px;text-align:center;font-size:13px;font-weight:bold;box-shadow:0 0 4px #000">${avg}%</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      })
+    });
+
+    // Address marker properties
+    const popup = `
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:180px;">
+      <div style="font-size:16px;font-weight:700;color:#0d2240;margin-bottom:4px;">
+        <svg width="18" height="18" viewBox="0 0 20 20" style="vertical-align:middle;margin-right:6px;">
+        <circle cx="10" cy="10" r="8" fill="#1976d2" stroke="#195fd2" stroke-width="2"/>
+        <path d="M10 5v5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="10" cy="13.5" r="1.2" fill="#fff"/>
+        </svg>
+        ${group.address}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:4px;">
+        <tr>
+        <td style="padding:4px 8px;color:#888;">Devices</td>
+        <td style="padding:4px 8px;font-weight:600;color:#1976d2;">${group.count}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+        <td style="padding:4px 8px;color:#888;">Avg Usage</td>
+        <td style="padding:4px 8px;font-weight:bold;color:${color};">${avg}%</td>
+        </tr>
+      </table>
+      <div style="font-size:12px;color:#144ead;">
+        <em>Click marker to expand and view all devices at this address.</em>
+      </div>
+      </div>
+    `;
+    marker.bindPopup(popup);
+
+    summaryContent.innerHTML += `<div style="margin-bottom: 6px;"><strong>${group.address}</strong> — ${group.count} devices — <span style='color:${color};font-weight:bold;'>${avg}%</span></div>`;
+    exportData.push({ Address: group.address, Devices: group.count, AvgUsage: avg });
+
+    marker.on('click', () => { // Open popup on click
+      if (lastOpenedGroupKey === groupKey) {
+        currentDeviceLayer.clearLayers();
+        lastOpenedGroupKey = null;
+        return;
+      }
+
+      currentDeviceLayer.clearLayers();
+
+      const deviceCluster = L.markerClusterGroup();
+
+      //test
+  group.devices.forEach(r => {
+    const pct = Number(r[key]) || 0;
+    const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+    if (isNaN(lat) || isNaN(lon)) return;
+
+    const m = L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: 'device-marker',
+        html: `<div style="background:${getColor(pct)};color:white;border-radius:50%;width:26px;height:26px;line-height:26px;text-align:center;font-size:12px;font-weight:bold;box-shadow:0 0 3px #000">${Math.round(pct)}%</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      }),
+      interactive: true
+    });
+    m.options.props = r;
+    m.bindPopup(`
+          <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="
+                display:inline-block;
+                width:100%;
+                box-sizing:border-box;
+                padding:5px 0 5px 12px;
+                border-radius:6px 6px 0 0;
+                background: linear-gradient(90deg, #e9ecef 0%, #f8fafc 100%);
+                box-shadow: none;
+                font-size:16px;
+                font-weight:700;
+                color:#23272f;
+                letter-spacing:0.2px;
+                border: none;
+                text-shadow:none;
+                margin:0;
+                transition:background 0.3s;
+              ">
+                ${r.Name || 'Device'}
+                <span style="
+                  font-size:13px;
+                  font-weight:700;
+                  margin-left:10px;
+                  color:#222;
+                  background:transparent;
+                  border-radius:5px;
+                  padding:0;
+                  border:none;
+                  box-shadow:none;
+                  text-shadow:none;
+                  letter-spacing:0px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:space-between;
+                  min-width:0;
+                  text-align:left;
+                  margin-left:10px;
+                  margin-right:0;
+                  line-height:1.2;
+                ">
+                <span style="
+                  display:inline-block;
+                  font-size:13px;
+                  font-weight:400;
+                  color:#555;
+                  margin-left:0;
+                  padding-left:0;
+                  white-space:normal;
+                  word-break:break-word;
+                  vertical-align:middle;
+                  max-width:140px;
+                ">
+                  ${r.Address || ''}
+                </span>
+                <span style="
+                  display:inline-block;
+                  font-size:13px;
+                  font-weight:700;
+                  color:#222;
+                  background:${getColor(pct)}CC;
+                  ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
+                  border-radius:5px;
+                  padding:3px 12px;
+                  border:1.5px solid #fff;
+                  box-shadow:0 1px 4px rgba(0,0,0,0.10);
+                  text-shadow:0 1px 2px #fff;
+                  letter-spacing:0px;
+                  min-width:44px;
+                  text-align:center;
+                  margin-left:12px;
+                  margin-right:0;
+                  line-height:1.2;
+                ">
+                  ${pct}%
+                </span>
+                </span>
+              </span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+              <tr>
+                <td style="padding:4px 8px;color:#888;">Entity ID</td>
+                <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Device Group</td>
+                <td style="padding:4px 8px;">${r.Device_group}</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 8px;color:#888;">Location</td>
+                <td style="padding:4px 8px;">${r.Floor}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Postal Code</td>
+                <td style="padding:4px 8px;">${r.Postal_code}</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 8px;color:#888;">City</td>
+                <td style="padding:4px 8px;">${r.City}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Usage</td>
+                <td style="padding:4px 8px;font-weight:bold;color:${getColor(pct)}">${pct}%</td>
+              </tr>
+            </table>
+          </div>
+        `);
+
+    oms.addMarker(m);
+    deviceCluster.addLayer(m);
+  });
+
+  currentDeviceLayer.addLayer(deviceCluster);
+  lastOpenedGroupKey = groupKey;
+
+  // Update counters dynamically
+  document.getElementById('deviceCount').textContent = group.count;
+  document.getElementById('npopCount').textContent = sortedGroups.length;
+    });
+
+    clusterGroup.addLayer(marker);
+  });
+
+
+  addressLayer.addLayer(clusterGroup);
+
+  exportBtn.onclick = () => {
+    const csv = ["Address,Devices,AvgUsage%"].concat(
+      exportData.map(row => `${row.Address},${row.Devices},${row.AvgUsage}`)
+    ).join("\n");function drawAddressSummary() {
+  currentDeviceLayer.clearLayers();
+  addressLayer.clearLayers();
+
+  // Reposition and style the summary panel for bottom-left
+  summaryPanel.style.position = 'absolute';
+  summaryPanel.style.bottom = '12px';
+  summaryPanel.style.left = '12px';
+  summaryPanel.style.zIndex = '1000';
+  summaryPanel.style.maxHeight = '300px';
+  summaryPanel.style.overflowY = 'auto';
+  summaryPanel.style.width = '260px';
+  summaryPanel.style.background = 'white';
+  summaryPanel.style.borderRadius = '8px';
+  summaryPanel.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  summaryPanel.style.padding = '8px';
+
+  // Create collapsible summary panel (collapsed by default)
+  summaryPanel.innerHTML = `
+    <details>
+      <summary style="
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 6px 12px;
+        background: linear-gradient(90deg, #f8fafc, #e9ecef);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        color: #2a4b7c;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        letter-spacing: 0.3px;
+      ">📍 Address Summary (click to expand)</summary>
+      <div id="summaryContent" style="padding: 8px 12px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #333;"></div>
+    </details>
+  `;
+
+  const summaryContent = document.getElementById('summaryContent');
+  const week = document.getElementById('weekSelector').value;
+  const key = `% Used: ${week}`;
+  const addressGroups = {};
+  const oms = new OverlappingMarkerSpiderfier(map);
+  const clusterGroup = L.markerClusterGroup();
+
+  rows.forEach(r => {
+    const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+    const addr = r.Address;
+    if (isNaN(lat) || isNaN(lon) || !addr) return;
+    const groupKey = addr + '_' + lat + '_' + lon;
+    const usage = parseFloat(r[key]) || 0;
+
+    if (!addressGroups[groupKey]) {
+      addressGroups[groupKey] = {
+        lat, lon, address: addr, devices: [],
+        usageTotal: 0, count: 0
+      };
+    }
+
+    addressGroups[groupKey].devices.push(r);
+    addressGroups[groupKey].usageTotal += usage;
+    addressGroups[groupKey].count += 1;
+  });
+
+  // Sort addresses by avg usage descending
+  const sortedGroups = Object.entries(addressGroups).sort(([, a], [, b]) => (b.usageTotal / b.count) - (a.usageTotal / a.count));
+
+  const exportData = [];
+
+  sortedGroups.forEach(([groupKey, group]) => {
+    const avg = (group.usageTotal / group.count).toFixed(1);
+    const color = getColor(avg);
+
+    const marker = L.marker([group.lat, group.lon], {
+      icon: L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background:${color};color:white;border-radius:50%;width:34px;height:34px;line-height:34px;text-align:center;font-size:13px;font-weight:bold;box-shadow:0 0 4px #000">${avg}%</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      })
+    });
+
+ 
+
+    summaryContent.innerHTML += `<div style="margin-bottom: 6px;"><strong>${group.address}</strong> — ${group.count} devices — <span style='color:${color};font-weight:bold;'>${avg}%</span></div>`;
+    exportData.push({ Address: group.address, Devices: group.count, AvgUsage: avg });
+
+    marker.on('click', () => {
+      // Collapse current group if already open
+  if (lastOpenedGroupKey === groupKey) {
+    currentDeviceLayer.clearLayers(); // Clear expanded device markers
+    lastOpenedGroupKey = null;        // Reset tracking key
+
+    // Reset report boxes
+    document.getElementById('deviceCount').textContent = '0';
+    document.getElementById('npopCount').textContent = totalDevices.toString();
+    document.getElementById('avgUsage').textContent = '0%';
+    return;
+  }
+
+  currentDeviceLayer.clearLayers(); // Clear previously shown device markers
+
+  const deviceCluster = L.markerClusterGroup(); // Create a cluster layer for devices
+
+  // Loop over each device in the selected address group
+  group.devices.forEach(r => {
+    const pct = Number(r[key]) || 0; // Get usage percentage for selected week
+    const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon); // Parse coordinates
+    if (isNaN(lat) || isNaN(lon)) return; // Skip invalid coordinates
+
+    // Create a styled div icon showing usage %
+    const m = L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: 'device-marker',
+        html: `<div style="background:${getColor(pct)};color:white;border-radius:50%;width:26px;height:26px;line-height:26px;text-align:center;font-size:12px;font-weight:bold;box-shadow:0 0 3px #000">${Math.round(pct)}%</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      }),
+      interactive: true
+    });
+
+        m.options.props = r;
+        m.bindPopup(`
+          <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="
+                display:inline-block;
+                width:100%;
+                box-sizing:border-box;
+                padding:5px 0 5px 12px;
+                border-radius:6px 6px 0 0;
+                background: linear-gradient(90deg, #e9ecef 0%, #f8fafc 100%);
+                box-shadow: none;
+                font-size:16px;
+                font-weight:700;
+                color:#23272f;
+                letter-spacing:0.2px;
+                border: none;
+                text-shadow:none;
+                margin:0;
+                transition:background 0.3s;
+              ">
+                ${r.Name || 'Device'}
+                <span style="
+                  font-size:13px;
+                  font-weight:700;
+                  margin-left:10px;
+                  color:#222;
+                  background:transparent;
+                  border-radius:5px;
+                  padding:0;
+                  border:none;
+                  box-shadow:none;
+                  text-shadow:none;
+                  letter-spacing:0px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:space-between;
+                  min-width:0;
+                  text-align:left;
+                  margin-left:10px;
+                  margin-right:0;
+                  line-height:1.2;
+                ">
+                <span style="
+                  display:inline-block;
+                  font-size:13px;
+                  font-weight:400;
+                  color:#555;
+                  margin-left:0;
+                  padding-left:0;
+                  white-space:normal;
+                  word-break:break-word;
+                  vertical-align:middle;
+                  max-width:140px;
+                ">
+                  ${r.Address || ''}
+                </span>
+                <span style="
+                  display:inline-block;
+                  font-size:13px;
+                  font-weight:700;
+                  color:#222;
+                  background:${getColor(pct)}CC;
+                  ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
+                  border-radius:5px;
+                  padding:3px 12px;
+                  border:1.5px solid #fff;
+                  box-shadow:0 1px 4px rgba(0,0,0,0.10);
+                  text-shadow:0 1px 2px #fff;
+                  letter-spacing:0px;
+                  min-width:44px;
+                  text-align:center;
+                  margin-left:12px;
+                  margin-right:0;
+                  line-height:1.2;
+                ">
+                  ${pct}%
+                </span>
+                </span>
+              </span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+              <tr>
+                <td style="padding:4px 8px;color:#888;">Entity ID</td>
+                <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Device Group</td>
+                <td style="padding:4px 8px;">${r.Device_group}</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 8px;color:#888;">Location</td>
+                <td style="padding:4px 8px;">${r.Floor}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Postal Code</td>
+                <td style="padding:4px 8px;">${r.Postal_code}</td>
+              </tr>
+              <tr>
+                <td style="padding:4px 8px;color:#888;">City</td>
+                <td style="padding:4px 8px;">${r.City}</td>
+              </tr>
+              <tr style="background:#f1f6fa;">
+                <td style="padding:4px 8px;color:#888;">Usage</td>
+                <td style="padding:4px 8px;font-weight:bold;color:${getColor(pct)}">${pct}%</td>
+              </tr>
+            </table>
+          </div>
+        `);
+
+        m.on('click', e => {
+          const popup = e.target.getPopup();
+          if (popup) {
+            popup.setLatLng(e.latlng);
+            popup.openOn(map);
+          }
+        });
+
+        oms.addMarker(m);
+        deviceCluster.addLayer(m);
+      });
+
+      currentDeviceLayer.addLayer(deviceCluster);
+      lastOpenedGroupKey = groupKey;
+
+      // Update dynamic counts
+      document.getElementById('deviceCount').textContent = group.count;
+      document.getElementById('npopCount').textContent = sortedGroups.length;
+    });
+
+    clusterGroup.addLayer(marker);
+  });
+
+  addressLayer.addLayer(clusterGroup);
+
+  exportBtn.onclick = () => {
+    const csv = ["Address,Devices,AvgUsage%"].concat(
+      exportData.map(row => `${row.Address},${row.Devices},${row.AvgUsage}`)
+    ).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'address_summary.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+}
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'address_summary.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+}
+
+
+</script>
+<!-- Revised Search Integration in leaflet_test.html -->
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const suggestions = document.getElementById('suggestions');
+  const modeRadios = document.querySelectorAll('input[name="searchMode"]');
+  const searchBtn = document.getElementById('searchBtn');
+
+  const searchData = {
+    Device_Entity_ID: [],
+    Address: []
+  };
+
+  // Update suggestions based on input
+  function updateSuggestions(term = '') {
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    suggestions.innerHTML = '';
+    searchData[mode]
+      .filter(v => v.toLowerCase().includes(term.toLowerCase()))
+      .slice(0, 10)
+      .forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        suggestions.appendChild(opt);
+      });
+  }
+
+  // Load Excel data and populate searchData
+  fetch('data/capacity/capacity_summary.xlsx')
+    .then(r => r.arrayBuffer())
+    .then(ab => {
+      const wb = XLSX.read(ab, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      searchData.Device_Entity_ID = [...new Set(rows.map(r => r.Device_Entity_ID).filter(Boolean))].sort();
+      searchData.Address = [...new Set(rows.map(r => r.Address).filter(Boolean))].sort();
+      updateSuggestions();
+    });
+
+  // Perform search logic
+  function performSearch() {
+  const mode = document.querySelector('input[name="searchMode"]:checked').value;
+  const query = searchInput.value.trim().toLowerCase();
+  if (!query) return;
+
+  let found = false;
+
+  const match = rows.find(r =>
+    (r[mode] || '').toString().toLowerCase() === query
+  );
+
+  if (match && match.Lat && match.Lon) {
+    const lat = parseFloat(match.Lat);
+    const lon = parseFloat(match.Lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      found = true;
+
+      // Zoom to location
+      map.setView([lat, lon], 16, { animate: true });
+
+      // Flash a red outline effect above the marker at the searched location
+      // Use a dedicated pane above markers for the outline
+      if (!map.getPane('flashOutlinePane')) {
+        map.createPane('flashOutlinePane');
+        map.getPane('flashOutlinePane').style.zIndex = 650; // above markerPane (600)
+        map.getPane('flashOutlinePane').style.pointerEvents = 'none';
+      }
+
+      // Remove any previous outline
+      if (window._flashOutlineMarker) {
+        map.removeLayer(window._flashOutlineMarker);
+        window._flashOutlineMarker = null;
+      }
+
+      // Create the outline marker, offset by 1px right and 1px down
+      const outlineLatLng = map.layerPointToLatLng(
+        map.latLngToLayerPoint([lat, lon]).add([1, 1])
+      );
+      const outlineMarker = L.circleMarker(outlineLatLng, {
+        radius: 18,
+        color: '#ff0000',
+        weight: 5,
+        fillOpacity: 0,
+        interactive: false,
+        pane: 'flashOutlinePane'
+      }).addTo(map);
+
+      window._flashOutlineMarker = outlineMarker;
+
+      // Animate the outline with a CSS class for a smooth flash
+      const el = outlineMarker.getElement();
+      if (el) {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity = '1';
+        setTimeout(() => {
+          el.style.opacity = '0';
+        }, 100);
+      }
+
+      setTimeout(() => {
+        map.removeLayer(outlineMarker);
+        if (window._flashOutlineMarker === outlineMarker) window._flashOutlineMarker = null;
+      }, 600);
+
+      const deviceAddress = match.Address;
+      const deviceCity = match.City;
+
+      const countByAddress = rows.filter(r => r.Address === deviceAddress).length;
+      const countByCity = rows.filter(r => r.City === deviceCity).length;
+
+      document.getElementById('deviceCount').textContent = countByAddress;
+      document.getElementById('npopCount').textContent = countByCity;
+    }
+  }
+
+  if (!found) {
+    alert(`No match for "${searchInput.value}" in ${mode}`);
+  }
+}
+  
+// Attach event listeners
+  searchInput.addEventListener('input', e => updateSuggestions(e.target.value));
+  modeRadios.forEach(radio => radio.addEventListener('change', () => {
+    searchInput.value = '';
+    updateSuggestions();
+    searchInput.focus();
+  }));
+
+  // Perform search on button click
+  searchBtn.addEventListener('click', performSearch); 
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performSearch();
+    }
+  });
+</script>
+
+</body></html>
