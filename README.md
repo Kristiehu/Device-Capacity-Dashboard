@@ -2,7 +2,9 @@
 
 - Uses **Leaflet** with OpenStreetMap base layer + Satellite imagery option  
 - Supports **zooming**, **panning**, and **layer toggling**
-- Explore via: [Interactive Map](https://kristiehu.github.io/Leaflet-Npop-Map/main/) 🌍
+- Explore via: [NPOP Map](https://kristiehu.github.io/Leaflet-Npop-Map/main/) 🌍
+               [Device Capacity Reporting Dashboard](https://kristiehu.github.io/Leaflet-Npop-Map/main/capacityReport.html) 📊
+               [Device Only Page](https://kristiehu.github.io/Leaflet-Npop-Map/main/capacityReport.html) 🔧
 
 ---
 
