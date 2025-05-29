@@ -1,89 +1,738 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Leaflet Postal Code Map with Clustering</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <meta charset="utf-8"/>
+  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles + Search + Report + Filter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <!-- Styles for map, controls, and UI elements -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.css"/>
+  <style>
+    html,
+    body,
+    #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .reportCluster {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 70%, rgba(230, 245, 255, 0.85) 100%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 12px;
+        color: #222;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+        border: 1px solid #e0e7ef;
+        position: relative;
+        z-index: 1000;
+        transition: box-shadow 0.2s, border 0.2s;
+    }
+
+    .reportCluster:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
+        border: 1.5px solid #b3d4fc;
+    }
+
+    /* Legend container */
+
+    .info.legend {
+        padding: 20px 25px;
+        font: 12px/14px Arial, sans-serif;
+        background: white;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+
+    /* colored squares */
+
+    .info.legend i {
+        width: 14px;
+        height: 14px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.7;
+        border-radius: 50%;
+        z-index: 1000;  
+    }
+
+    #reportTitle {
+        position: absolute;
+        top: 10px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+        font-size: 24px;
+        font-weight: bold;
+        color: black;
+        text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
+    }
+    #searchContainer {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+    }
+
+    #searchContainer input[type="text"] {
+     padding: 5px;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+    }
+
+    #searchContainer label {
+     font-size: 12px;
+    }
+
+    #controlsContainer {
+        position: absolute;
+        top: 12px;
+        left: 50px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.8);
+        width: 260px;
+        font-family: sans-serif;
+        font-size: 12px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    /* constrain popup width */
+.leaflet-popup-content-wrapper .popup-group {
+  max-width: 260px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+}
+
+.leaflet-popup-content-wrapper .device-entry {
+  margin-bottom: 8px;
+}
+
+.leaflet-popup-content-wrapper .device-entry h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #007bff;
+}
+
+.leaflet-popup-content-wrapper .device-entry p {
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+.leaflet-popup-content-wrapper hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 6px 0;
+}
+
+.device-dot {
+  width: 10px; height: 10px;
+  background: rgba(255, 165, 0, 0.8);
+  border: 1px solid white;
+  border-radius: 50%;
+}
+
+    #filterContainer {
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        border-radius: 4px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        gap: 4px;
+    }
+
+    #filterInput {
+        flex: 1;
+        padding: 4px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #clearBtn {
+        background: #e0e0e0;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    #clearBtn:hover {
+        background: #ccc;
+    }
+
+    #weekSelector {
+        padding: 4px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+  </style>
+  <style>
+  .custom-icon {
+    border: none;
+    background: transparent;
+  }
+  </style>
 </head>
 <body>
-  <h3>Upload your CSV file:</h3>
-  <input type="file" id="csvFile" accept=".csv" multiple/>
-  <p id="summary"></p>
-  <div id="map" style="height: 600px;"></div>
+  <div id="reportTitle">Npop - Device Count & Distribution Report</div>
+  <div id="controlsContainer">
+    <div id="searchContainer">
+      <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" />
+      <datalist id="suggestions"></datalist>
+      <label><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
+      <label><input type="radio" name="searchMode" value="Address" /> Address</label>
+    </div>    
+    <div id="reportBox1" class="reportCluster">>
+      Showing total npop count by city: <strong><span id="npopCount">0</span></strong>
+    </div>
+    <div id="reportBox2" class="reportCluster">>
+      Showing total device count by city: <strong><span id="npopCount">0</span></strong>
+    </div>
 
-  <script>
-    const map = L.map('map').setView([0, 0], 2);
+    <select id="weekSelector"></select>
+    <div id="filterContainer">
+      <input id="filterInput" list="filterList" placeholder="Filter by name..." />
+      <button id="clearBtn" title="Clear filter">×</button>
+    </div>
+    <datalist id="filterList"></datalist>
+  </div>
+  <div id="map"></div>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-    }).addTo(map);
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    const markers = L.markerClusterGroup();
-    map.addLayer(markers);
+  <!-- MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-    let pointCount = 0;
+  <!-- OverlappingMarkerSpiderfier -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OverlappingMarkerSpiderfier-Leaflet/0.2.6/oms.min.js"></script>
 
-    document.getElementById('csvFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          let pendingGeocodes = 0;
+  <!-- External JS libraries -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-search@3.0.9/dist/leaflet-search.min.js"></script>
 
-          results.data.forEach(row => {
-            const postalCode = row['postal_code'];
-            const x = parseFloat(row['x']);  // longitude
-            const y = parseFloat(row['y']);  // latitude
+  <!-- XLSX library for reading Excel files -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-            if (!isNaN(x) && !isNaN(y)) {
-              const marker = L.marker([y, x])
-                .bindPopup(`Postal Code: ${postalCode || 'N/A'}<br>Coordinates: ${y}, ${x}`);
-              markers.addLayer(marker);
-              pointCount++;
-              updateSummary();
-            } else if (postalCode) {
-              pendingGeocodes++;
-              fetch(`https://nominatim.openstreetmap.org/search?postalcode=${postalCode}&format=json&limit=1`)
-                .then(response => response.json())
-                .then(data => {
-                  if (data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    const marker = L.marker([lat, lon])
-                      .bindPopup(`Postal Code: ${postalCode}<br>Coordinates (geocoded): ${lat}, ${lon}`);
-                    markers.addLayer(marker);
-                    pointCount++;
-                  } else {
-                    console.warn(`No geocode result for postal code: ${postalCode}`);
-                  }
-                  pendingGeocodes--;
-                  if (pendingGeocodes === 0) updateSummary();
-                })
-                .catch(err => {
-                  console.error('Geocoding error:', err);
-                  pendingGeocodes--;
-                  if (pendingGeocodes === 0) updateSummary();
-                });
-            } else {
-              console.warn('Row missing both coordinates and postal code.');
-            }
+<script> // Initialize map
+  // Initialize map
+  const map = L.map('map').setView([43.7, -79.4], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
+
+  // Gradient color scheme: 0 = special color, then green → yellow-green → yellow → orange → red
+  function getColor(d) {
+    if (d === 0) return '#b0b8c1'; // No Usage (light gray-blue)
+    if (d <= 20) return '#43a047'; // <=20% (green)
+    if (d <= 40) return '#cddc39'; // <=40% (yellow-green)
+    if (d <= 60) return '#fdd835'; // <=60% (yellow)
+    if (d <= 80) return '#fb8c00'; // <=80% (orange)
+    if (d >  80) return '#e53935'; // <=100% (red)
+    return '#b0b8c1'; // fallback
+  }
+
+  // Legend
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'info legend');
+    const grades = [0, 20, 40, 60, 80, 100];
+    const labels = [
+      { icon: '<i style="background:#b0b8c1"></i>', text: 'No Usage' },
+      { icon: '<i style="background:#43a047"></i>', text: '0 - 20%' },
+      { icon: '<i style="background:#cddc39"></i>', text: '20 - 40%' },
+      { icon: '<i style="background:#fdd835"></i>', text: '40 - 60%' },
+      { icon: '<i style="background:#fb8c00"></i>', text: '60 - 80%' },
+      { icon: '<i style="background:#e53935"></i>', text: '80 - 100%' }
+    ];
+    div.innerHTML = `
+      <div style="
+        font-weight:700;
+        font-size:15px;
+        margin-bottom:8px;
+        color:#23272f;
+        letter-spacing:0.1px;
+        text-align:left;
+      ">
+        <span style="display:inline-block;vertical-align:middle;margin-right:6px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" style="vertical-align:middle">
+            <defs>
+              <radialGradient id="legendGlow" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#fff176" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#fb8c00" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#e53935" stop-opacity="1"/>
+              </radialGradient>
+            </defs>
+            <circle cx="11" cy="11" r="9" fill="url(#legendGlow)" stroke="#23272f" stroke-width="1.5"/>
+            <path d="M11 5.5v6" stroke="#23272f" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="11" cy="15.5" r="1.2" fill="#23272f"/>
+          </svg>
+        </span>
+        Usage Legend
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+    `;
+    labels.forEach((obj, i) => {
+      div.innerHTML += `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-block;vertical-align:middle;">${obj.icon}</span>
+          <span style="font-size:13px;line-height:1.2;">${obj.text}</span>
+        </div>
+      `;
+    });
+    div.innerHTML += '</div>';
+    return div;
+  };
+  legend.addTo(map);
+
+  // Add address icons
+  const addressIcon = (count) => L.divIcon({
+    className: 'address-icon',
+    html: count.toString(),
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+
+  // Data containers
+  let rows = [];
+  window.npopLayer = L.layerGroup().addTo(map);
+
+  // Load Excel & prepare weeks
+  fetch('data/capacity/capacity_summary.xlsx').then(r=>r.arrayBuffer()).then(ab=>{
+    const wb = XLSX.read(ab,{type:'array'});
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    const weekKeys = Object.keys(rows[0]).filter(k=>k.startsWith('% Used:'));
+    const weeks = weekKeys.map(k=>k.replace('% Used: ','').trim());
+    const sel = document.getElementById('weekSelector');
+    weeks.forEach(w=>{const o=document.createElement('option'); o.value = o.textContent = w; sel.append(o);});
+    sel.value = weeks[weeks.length-1];
+    drawNpop(sel.value);
+    sel.addEventListener('change', ()=> drawNpop(sel.value));
+  });
+
+  // Draw NPOP markers for a given week
+  function drawNpop(week){
+    window.npopLayer.clearLayers();
+    const key = `% Used: ${week}`;
+    rows.forEach(r=>{
+      const pct = Number(r[key]) || 0;
+      const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+      if(isNaN(lat)||isNaN(lon)) return;
+
+      // Choose SVG icon based on usage and wrap in a container div for hover effects
+      // Use a smaller colored circle marker (no icon/SVG)
+      let svgIcon = `
+        <div style="
+          width:12px;
+          height:12px;
+          border-radius:50%;
+          background:${getColor(pct)};
+          border:1.5px solid #fff;
+          box-shadow:0 1px 2px rgba(0,0,0,0.10);
+          display:inline-block;
+          transition: box-shadow 0.2s, border 0.2s, transform 0.2s;
+        "></div>
+      `;
+      const m = L.circleMarker([lat, lon], {
+        radius: 7,
+        fillColor: getColor(pct),
+        color: '#fff',
+        weight: 1.5,
+        opacity: 1,
+        fillOpacity: 0.95
+      });
+      m.options.props = r;
+
+      // add effects
+      // m.setOpacity(0.8);
+      // m.setZIndexOffset(1000);
+      // m.on('click', function(e) { 
+      //   m.openPopup(); }); 
+      //   m.on('mouseover', function(e) { 
+      //     // m.setStyle({ radius: 8, weight: 2, color: '#222' }); 
+      //     m.bringToFront();}); 
+      //     m.on('mouseout', function(e) { 
+      //       // m.setStyle({ radius: 5.5, weight: 1, color: '#333' }); 
+      //     });
+      //       m.options.props = r;
+      m.bindPopup(
+        `
+        <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:100%;margin:0;padding:0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="
+              display:inline-block;
+              width:100%;
+              box-sizing:border-box;
+              padding:5px 0 5px 12px;
+              border-radius:6px 6px 0 0;
+              background: linear-gradient(90deg, #e9ecef 0%, #f8fafc 100%);
+              box-shadow: none;
+              font-size:16px;
+              font-weight:700;
+              color:#23272f;
+              letter-spacing:0.2px;
+              border: none;
+              text-shadow:none;
+              margin:0;
+              transition:background 0.3s;
+            ">
+              ${r.Name || 'Device'}
+              <span style="
+          font-size:13px;
+          font-weight:700;
+          margin-left:10px;
+          color:#222;
+          background:transparent;
+          border-radius:5px;
+          padding:0;
+          border:none;
+          box-shadow:none;
+          text-shadow:none;
+          letter-spacing:0px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          min-width:0;
+          text-align:left;
+          margin-left:10px;
+          margin-right:0;
+          line-height:1.2;
+          ">
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:400;
+            color:#555;
+            margin-left:0;
+            padding-left:0;
+            white-space:normal;
+            word-break:break-word;
+            vertical-align:middle;
+            max-width:140px;
+            ">
+            ${r.Address || ''}
+          </span>
+          <span style="
+            display:inline-block;
+            font-size:13px;
+            font-weight:700;
+            color:#222;
+            background:${getColor(pct)}CC;
+            ${pct >= 20 ? 'box-shadow:0 0 0 3px #ff9800aa;' : ''}
+            border-radius:5px;
+            padding:3px 12px;
+            border:1.5px solid #fff;
+            box-shadow:0 1px 4px rgba(0,0,0,0.10);
+            text-shadow:0 1px 2px #fff;
+            letter-spacing:0px;
+            min-width:44px;
+            text-align:center;
+            margin-left:12px;
+            margin-right:0;
+            line-height:1.2;
+          ">
+            ${pct}%
+          </span>
+          </span>
+        </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f9fbfd;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Entity ID</td>
+          <td style="padding:4px 8px;font-weight:500;">${r.Device_Entity_ID}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Device Group</td>
+          <td style="padding:4px 8px;">${r.Device_group}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">Location</td>
+          <td style="padding:4px 8px;">${r.Floor}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Postal Code</td>
+          <td style="padding:4px 8px;">${r.Postal_code}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:#888;">City</td>
+          <td style="padding:4px 8px;">${r.City}</td>
+        </tr>
+        <tr style="background:#f1f6fa;">
+          <td style="padding:4px 8px;color:#888;">Usage</td>
+          <td style="padding:4px 8px;font-weight:bold;color:${getColor(pct)}">${pct}%</td>
+        </tr>
+          </table>
+        </div>
+        `
+      );
+      // Track popup open state
+      let popupOpen = false;
+
+      // Click: highlight marker visually and open popup
+      m.on('click', function() {
+        popupOpen = true;
+        m.setStyle({
+          radius: 9,
+          weight: 2.5,
+          color: '#1976d2',
+          fillOpacity: 1
+        });
+        m.bringToFront();
+        m.openPopup();
+      });
+
+      // Mouseover: highlight marker visually only if popup not open
+      m.on('mouseover', function() {
+        if (!popupOpen) {
+          m.setStyle({
+        radius: 9,
+        weight: 2.5,
+        color: '#1976d2',
+        fillOpacity: 1
+          });
+          m.bringToFront();
+        }
+      });
+
+      // Mouseout: revert marker to default style only if popup not open
+      m.on('mouseout', function() {
+        if (!popupOpen) {
+          m.setStyle({
+        radius: 7,
+        weight: 1.5,
+        color: '#fff',
+        fillOpacity: 0.95
           });
         }
       });
+
+      // When popup closes, revert marker to default style and allow hover effect again
+      m.on('popupclose', function() {
+        popupOpen = false;
+        m.setStyle({
+          radius: 7,
+          weight: 1.5,
+          color: '#fff',
+          fillOpacity: 0.95
+        });
+      });
+ 
+      window.npopLayer.addLayer(m);
+    });
+  }
+
+  // Auto-Update on Week Change
+  function drawAddressSummary() {
+  currentDeviceLayer.clearLayers();  // clear old device markers
+  addressLayer.clearLayers();        // clear old address markers
+
+  const week = document.getElementById('weekSelector').value;
+  const key = `% Used: ${week}`;
+  const addressGroups = {};
+
+  rows.forEach(r => {
+    const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+    const addr = r.Address;
+    if (isNaN(lat) || isNaN(lon) || !addr) return;
+    const groupKey = addr + '_' + lat + '_' + lon;
+    const usage = parseFloat(r[key]) || 0;
+
+    if (!addressGroups[groupKey]) {
+      addressGroups[groupKey] = {
+        lat, lon, address: addr, devices: [],
+        shared: { City: r.City, Postal_code: r.Postal_code, Floor: r.Floor },
+        usageTotal: 0, count: 0
+      };
+    } else {
+      ['City', 'Postal_code', 'Floor'].forEach(f => {
+        if (addressGroups[groupKey].shared[f] !== r[f]) {
+          addressGroups[groupKey].shared[f] = null;
+        }
+      });
+    }
+
+    addressGroups[groupKey].devices.push(r);
+    addressGroups[groupKey].usageTotal += usage;
+    addressGroups[groupKey].count += 1;
+  });
+
+  Object.values(addressGroups).forEach(group => {
+    const avg = (group.usageTotal / group.count).toFixed(1);
+    const color = getColor(avg);
+    const marker = L.marker([group.lat, group.lon], {
+      icon: L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background:${color};color:white;border-radius:50%;width:34px;height:34px;line-height:34px;text-align:center;font-size:13px;font-weight:bold;box-shadow:0 0 4px #000">${avg}%</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      })
     });
 
-    function updateSummary() {
-      document.getElementById('summary').textContent = `Total points mapped: ${pointCount}`;
-    }
-  </script>
-</body>
-</html>
+    const popup = `
+      <strong>${group.address}</strong><br>
+      Devices: ${group.count}<br>
+      Avg Usage: ${avg}%<br>
+      ${group.shared.City ? `City: ${group.shared.City}<br>` : ''}
+      ${group.shared.Postal_code ? `Postal: ${group.shared.Postal_code}<br>` : ''}
+      ${group.shared.Floor ? `Floor: ${group.shared.Floor}<br>` : ''}
+    `;
+    marker.bindPopup(popup);
+    marker.addTo(addressLayer);
+  });}
+
+
+  // SEARCH LOGIC
+  const searchInput = document.getElementById('searchInput');
+  const suggestions = document.getElementById('suggestions');
+  const modeRadios = document.querySelectorAll('input[name="searchMode"]');
+
+  // Prepare suggestion lists
+  const searchData = {
+    Device_Entity_ID: [...new Set(rows.map(r => r.Device_Entity_ID).filter(Boolean))].sort(),
+    Address:           [...new Set(rows.map(r => r.Address).filter(Boolean))].sort()
+  };
+
+  // Update datalist options
+  function updateSuggestions(term=''){
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    suggestions.innerHTML = '';
+    searchData[mode]
+      .filter(v => v.toLowerCase().includes(term.toLowerCase()))
+      .slice(0,10)
+      .forEach(v => { const opt = document.createElement('option'); opt.value = v; suggestions.append(opt); });
+  }
+  searchInput.addEventListener('input', e => updateSuggestions(e.target.value));
+  modeRadios.forEach(radio => radio.addEventListener('change', ()=>{
+    searchInput.value = '';
+    updateSuggestions();
+    searchInput.focus();
+  }));
+
+  // Perform search on change or Enter
+  function performSearch(){
+    const mode = document.querySelector('input[name="searchMode"]:checked').value;
+    const query = searchInput.value.trim().toLowerCase(); if(!query) return;
+    let found=false;
+    window.npopLayer.eachLayer(marker => {
+      const val = (marker.options.props[mode] || '').toString().toLowerCase();
+      if(val === query){
+        map.setView(marker.getLatLng(), 14);
+        marker.openPopup();
+        found=true;
+      }
+    });
+    if(!found) alert(`No match for "${searchInput.value}" in ${mode}`);
+  }
+  searchInput.addEventListener('change', performSearch);
+  searchInput.addEventListener('keydown', e => { if(e.key==='Enter'){ performSearch(); e.preventDefault(); }});
+</script>
+
+<script> // Leaflet Cluster Spiderfier
+  let currentDeviceLayer = L.layerGroup().addTo(map);
+  const addressGroups = {};
+rows.forEach(r => {
+  const lat = parseFloat(r.Lat), lon = parseFloat(r.Lon);
+  const addr = r.Address;
+  if (isNaN(lat) || isNaN(lon) || !addr) return;
+  const key = addr + '_' + lat + '_' + lon;
+  if (!addressGroups[key]) {
+    addressGroups[key] = {
+      lat,
+      lon,
+      address: addr,
+      devices: [],
+      shared: { City: r.City, Postal_code: r.Postal_code, Floor: r.Floor },
+      usageTotal: 0,
+      count: 0
+    };
+  } else {
+    // nullify shared fields if mismatch
+    ['City', 'Postal_code', 'Floor'].forEach(f => {
+      if (addressGroups[key].shared[f] !== r[f]) {
+        addressGroups[key].shared[f] = null;
+      }
+    });
+  }
+
+  const usage = parseFloat(r[`% Used: ${document.getElementById('weekSelector').value}`]) || 0;
+  addressGroups[key].devices.push(r);
+  addressGroups[key].usageTotal += usage;
+  addressGroups[key].count += 1;
+});
+
+  const addressLayer = L.layerGroup().addTo(map);
+  const oms = new OverlappingMarkerSpiderfier(map);
+
+  Object.values(addressGroups).forEach(group => {
+    
+    const deviceCount = group.devices.length;
+    const avgUsage = (group.usageTotal / group.count).toFixed(1);
+    const color = getColor(avgUsage);
+
+    const marker = L.marker([group.lat, group.lon], {
+      icon: L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background:${color};color:white;border-radius:50%;width:34px;height:34px;line-height:34px;text-align:center;font-size:13px;font-weight:bold;box-shadow:0 0 4px #000">${avgUsage}%</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      })
+    });
+
+    const popupHTML = `
+      <strong>${group.address}</strong><br>
+      Devices: ${group.count}<br>
+      Avg Usage: ${avgUsage}%<br>
+      ${group.shared.City ? `City: ${group.shared.City}<br>` : ''}
+      ${group.shared.Postal_code ? `Postal: ${group.shared.Postal_code}<br>` : ''}
+      ${group.shared.Floor ? `Floor: ${group.shared.Floor}<br>` : ''}
+    `;
+    marker.bindPopup(popupHTML);
+
+
+    marker.on('click', () => {
+      currentDeviceLayer.clearLayers();
+      group.devices.forEach(dev => {
+        const dLat = parseFloat(dev.Lat), dLon = parseFloat(dev.Lon);
+        const popupContent = `<b>${dev.Name}</b><br>${dev.Address}<br>${dev.Device_Entity_ID}`;
+
+        const devMarker = L.marker([dLat, dLon], {
+          icon: L.divIcon({
+            className: 'device-marker',
+            html: `<div style="background:${getColor(Number(dev[`% Used: ${document.getElementById('weekSelector').value}`]) || 0)};width:12px;height:12px;border-radius:50%;border:1px solid white;"></div>`,
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+          })
+        }).bindPopup(popupContent);
+
+        oms.addMarker(devMarker);
+        currentDeviceLayer.addLayer(devMarker);
+      });
+    });
+
+    marker.bindTooltip(`<b>${group.address}</b><br>${deviceCount} devices`, { permanent: false });
+    marker.addTo(addressLayer);
+  })
+    
+ 
+</script>
+
+</body></html>
