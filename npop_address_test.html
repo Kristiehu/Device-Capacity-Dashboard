@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Postal Code Map with Clustering</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+  <h3>Upload your CSV file:</h3>
+  <input type="file" id="csvFile" accept=".csv" multiple/>
+  <p id="summary"></p>
+  <div id="map" style="height: 600px;"></div>
+
+  <script>
+    const map = L.map('map').setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    map.addLayer(markers);
+
+    let pointCount = 0;
+
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          let pendingGeocodes = 0;
+
+          results.data.forEach(row => {
+            const postalCode = row['postal_code'];
+            const x = parseFloat(row['x']);  // longitude
+            const y = parseFloat(row['y']);  // latitude
+
+            if (!isNaN(x) && !isNaN(y)) {
+              const marker = L.marker([y, x])
+                .bindPopup(`Postal Code: ${postalCode || 'N/A'}<br>Coordinates: ${y}, ${x}`);
+              markers.addLayer(marker);
+              pointCount++;
+              updateSummary();
+            } else if (postalCode) {
+              pendingGeocodes++;
+              fetch(`https://nominatim.openstreetmap.org/search?postalcode=${postalCode}&format=json&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    const marker = L.marker([lat, lon])
+                      .bindPopup(`Postal Code: ${postalCode}<br>Coordinates (geocoded): ${lat}, ${lon}`);
+                    markers.addLayer(marker);
+                    pointCount++;
+                  } else {
+                    console.warn(`No geocode result for postal code: ${postalCode}`);
+                  }
+                  pendingGeocodes--;
+                  if (pendingGeocodes === 0) updateSummary();
+                })
+                .catch(err => {
+                  console.error('Geocoding error:', err);
+                  pendingGeocodes--;
+                  if (pendingGeocodes === 0) updateSummary();
+                });
+            } else {
+              console.warn('Row missing both coordinates and postal code.');
+            }
+          });
+        }
+      });
+    });
+
+    function updateSummary() {
+      document.getElementById('summary').textContent = `Total points mapped: ${pointCount}`;
+    }
+  </script>
+</body>
+</html>
