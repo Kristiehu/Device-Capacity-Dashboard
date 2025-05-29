@@ -273,22 +273,22 @@
         </div>
       
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button id="exportBtn"
+          <button id="jumpBtn1"
             style="padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; border-radius: 6px;
                    background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%); color: #fff; cursor: pointer;
                    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12); letter-spacing: 0.2px;"
             onmouseover="this.style.background='#000000'"
             onmouseout="this.style.background='linear-gradient(90deg, #1976d2 0%, #2196f3 100%)'">
-            Export Data
+            🔗 NPOP Heatmap
           </button>
       
-          <button id="jumpBtn"
+          <button id="jumpBtn2"
             style="padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; border-radius: 6px;
                    background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%); color: #fff; cursor: pointer;
                    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12); letter-spacing: 0.2px;"
             onmouseover="this.style.background='#000000'"
             onmouseout="this.style.background='linear-gradient(90deg, #1976d2 0%, #2196f3 100%)'">
-            Go to Summary
+            🔗 Main Capacity Dashboard
           </button>
         </div>
       </div>
@@ -723,21 +723,12 @@
 </script>
 
 <script>
-  // Export data to CSV
-  document.getElementById('exportBtn').addEventListener('click', () => {
-    const csv = Papa.unparse(rows);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'npop_data.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
   // Jump to summary page
-  document.getElementById('jumpBtn').addEventListener('click', () => {
-    window.location.href = 'leaflet_test.html'; // Adjust the URL as needed
+  document.getElementById('jumpBtn1').addEventListener('click', () => {
+    window.location.href = 'index.html'; // Adjust the URL as needed
+  });
+  document.getElementById('jumpBtn2').addEventListener('click', () => {
+    window.location.href = 'capacityReport.html'; // Adjust the URL as needed
   });
 </script>
 

@@ -67,7 +67,19 @@
     </div>
 </div>
   
-  <div id="map" style="position:absolute;top:0px;left:0;right:0;bottom:0;z-index:0;"></div>
+  <div id="map" style="position:absolute;top:0px;left:0;right:0;bottom:0;z-index:0;">
+    <div style="position: absolute; top: 18px; right: 18px; z-index: 1202;">
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+      <button id="jumpBtn1" title="Go to Page 1" class="jumpBtn">🔗 NPOP Heatmap</button>
+      <button id="jumpBtn2" title="Go to Page 2" class="jumpBtn">🔗 Main Capacity Dashboard</button>
+      </div>
+    </div>
+    <script>
+      document.getElementById('jumpBtn1').onclick = () => { window.location.href = 'index.html'; };
+      document.getElementById('jumpBtn2').onclick = () => { window.location.href = 'devices_only.html'; };
+    </script>
+  </div>
+  </div>
   <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 20px; background: linear-gradient(90deg, #f8fafc 60%, #e3f0ff 100%); padding: 12px 36px 12px 24px; border-radius: 14px; box-shadow: 0 4px 24px rgba(42,75,124,0.13), 0 1.5px 4px rgba(0,120,255,0.07); color: #1a2a4b; z-index: 1201; font-family: 'Segoe UI', Arial, sans-serif; letter-spacing: 0.2px; font-weight: 700; display: flex; align-items: center; gap: 14px; border: 1.5px solid #e0e7ef;">
     <svg width="32" height="32" viewBox="0 0 32 32" style="vertical-align:middle">
       <g>
@@ -79,8 +91,8 @@
     </svg>
     <span>
       Interactive Device Capacity Reporting Dashboard
-    </span>
-  </div>
+    </span></div>
+   
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -425,46 +437,6 @@ const filterInput = document.getElementById('filterInput');
 const filterList = document.getElementById('filterList');
 const clearBtn = document.getElementById('clearBtn');
 const searchLayer = L.layerGroup().addTo(map);
-const detailBtn = document.createElement('button');
-// Create a standalone button container at the top right of the map
-const detailBtnContainer = document.createElement('div');
-detailBtnContainer.style.cssText = `
-  position: absolute;
-  top: 16px;
-  right: 24px;
-  z-index: 1200;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-`;
-
-// Create the button
-detailBtn.textContent = 'Device Info Page';
-detailBtn.style.cssText = `
-  margin-top: 4px;
-  padding: 8px 18px;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
-  letter-spacing: 0.2px;
-  transition: background 0.2s, box-shadow 0.2s;
-`;
-detailBtn.onmouseover = () => detailBtn.style.background = '#000000';
-detailBtn.onmouseout = () => detailBtn.style.background = '#000fff';
-
-detailBtnContainer.appendChild(detailBtn);
-document.body.appendChild(detailBtnContainer);
-
-detailBtn.addEventListener('click', () => {
-  window.location.href = 'devices_only.html';
-});
-
-
 
 
 function drawAddressSummary() {
