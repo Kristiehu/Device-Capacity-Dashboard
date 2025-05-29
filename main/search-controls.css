@@ -1,0 +1,26 @@
+#searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+#searchContainer input[type="text"] {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#searchContainer label {
+  font-size: 12px;
+  color: #333;
+}
+
+#weekSelector {
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #bbb;
+  background: #fff;
+  font-size: 13px;
+  width: 100%;
+}

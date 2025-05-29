@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Leaflet – OSM + CSV & Heatmap & Shapefiles + Search + Report + Filter</title>
+  <title>Leaflet – NPOP Distribution Map</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 
   <!-- Styles for map, controls, and UI elements -->
@@ -94,7 +94,16 @@
   </style>
 
 <body>
-  <div id="reportTitle">Npop Count & Distribution Report</div>
+  <div id="reportTitle">Npop Count & Distribution Report
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 8px;">
+      <button id="jumpBtn1" title="Go to Page 1" class="jumpBtn">🔗 Capacity Main Dashboard</button>
+      <button id="jumpBtn2" title="Go to Page 2" class="jumpBtn">🔗 Device Only Page </button>
+    </div>
+    </div>
+    <script>
+      document.getElementById('jumpBtn1').onclick = () => { window.location.href = 'capacityReport.html'; };
+      document.getElementById('jumpBtn2').onclick = () => { window.location.href = 'devicesOnly.html'; };
+    </script></div>
   <div id="controlsContainer">
     <div id="reportBox" class="reportCluster">
       Showing total npop count by city: <strong><span id="npopCount">0</span></strong>

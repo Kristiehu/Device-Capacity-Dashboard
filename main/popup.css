@@ -1,0 +1,28 @@
+
+/* === Leaflet Popup Customization === */
+.leaflet-popup-content-wrapper .popup-group {
+  max-width: 260px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+}
+
+.leaflet-popup-content-wrapper .device-entry {
+  margin-bottom: 8px;
+}
+
+.leaflet-popup-content-wrapper .device-entry h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #007bff;
+}
+
+.leaflet-popup-content-wrapper .device-entry p {
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+.leaflet-popup-content-wrapper hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 6px 0;
+}

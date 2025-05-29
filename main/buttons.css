@@ -1,0 +1,60 @@
+.btn {
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 7px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(67,160,71,0.08);
+  transition: background 0.2s;
+}
+
+.jump-btn {
+  background: #fff;
+  padding: 10px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
+}
+
+.jump-btn:hover {
+  background-color: #1b3761;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.jump-btn:active {
+  transform: translateY(0); /* Slight depress on click */
+}
+
+
+.detail-btn {
+  margin-top: 4px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1976d2 0%, #2196f3 100%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
+  letter-spacing: 0.2px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+/* suggested name: Primary Gradient Button */
+
+.detail-btn-container {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+/* suggested name: Button Floating Corner Container */

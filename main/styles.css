@@ -1,0 +1,221 @@
+/* === Base Layout === */
+html, body, #map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Title Styling === */
+#reportTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2a4b7c;
+  text-align: center;
+  margin-bottom: 10px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* === Top UI Controls === */
+#topControls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  display: 100%;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: rgba(255,255,255,0.95);
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* === Report Cluster Box === */
+.reportCluster {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 70%, rgba(230, 245, 255, 0.85) 100%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #222;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+  border: 1px solid #e0e7ef;
+  position: relative;
+  z-index: 1000;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+.reportCluster:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
+  border: 1.5px solid #b3d4fc;
+}
+
+/* === Legend (used in .info.legend) === */
+.info.legend {
+  padding: 22px 30px 18px 30px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(42,75,124,0.13), 0 1.5px 4px rgba(0,120,255,0.07);
+  border-radius: 12px;
+  color: #23272f;
+  border: 1.5px solid #e0e7ef;
+  letter-spacing: 0.1px;
+  min-width: 210px;
+  max-width: 320px;
+}
+
+.info.legend i {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  margin-right: 12px;
+  opacity: 0.85;
+  border-radius: 50%;
+  vertical-align: middle;
+  border: 1.5px solid #e0e7ef;
+  box-shadow: 0 1px 3px rgba(42,75,124,0.08);
+}
+
+/* === Custom Icon for Cluster Markers === */
+.custom-icon {
+  border: none;
+  background: transparent;
+}
+
+
+#clearBtn {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+#clearBtn:hover {
+  background: #ccc;
+}
+
+.device-dot {
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 165, 0, 0.8);
+  border: 1px solid white;
+  border-radius: 50%;
+}
+
+#controlsContainer {
+  position: absolute;
+  top: 12px;
+  left: 50px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  width: 260px;
+  font-family: sans-serif;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+#filterInput {
+  flex: 1;
+  padding: 4px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* === Report Section Wrappers === */
+.report-wrapper {
+  padding: 12px;
+}
+
+.report-header {
+  font-weight: 600;
+  font-size: 15px;
+  color: #2a4b7c;
+}
+
+.report-highlight {
+  color: #007bff;
+  font-size: 2em;
+  font-weight: 800;
+}
+
+.report-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.report-label {
+  font-size: 13px;
+  color: #444;
+}
+
+.report-week-selector {
+  padding: 4px 10px;
+  font-size: 13px;
+  border-radius: 5px;
+  border: 1px solid #b3c6e0;
+  background: #f7fbff;
+  color: #2a4b7c;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(42,75,124,0.06);
+}
+
+
+/* === Summary Panel === */
+#summaryPanel {
+  position: absolute;
+  left: 12px;
+  bottom: 80px;
+  z-index: 1000;
+  width: 260px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 8px;
+  overflow-y: auto;
+  transition: bottom 0.3s ease;
+}
+
+#summaryPanel details summary.summary-toggle {
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px 12px;
+  background: linear-gradient(90deg, #f8fafc, #e9ecef);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  color: #2a4b7c;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+#summaryContent {
+  padding: 8px 12px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.summary-row {
+  margin-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
