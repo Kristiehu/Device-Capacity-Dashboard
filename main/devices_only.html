@@ -14,15 +14,15 @@
     html,
     body,
     #map {
-        height: 100%;
-        top: 10px; /* adjust based on topBar height */
-        bottom: 0;
-        left: 0;
-        right: 0;
+      margin: 0px;
+      height: 100%;
+      bottom: 0;
+      left: 0;
+      right: 0;
     }
 
     .reportCluster {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 70%, rgba(230, 245, 255, 0.85) 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 70%, rgba(230, 245, 255, 0.85) 100%);
         padding: 10px 14px;
         border-radius: 8px;
         font-family: 'Segoe UI', Arial, sans-serif;
@@ -61,19 +61,7 @@
         border-radius: 50%;
         z-index: 1000;  
     }
-
-    #reportTitle {
-        position: absolute;
-        top: 10px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        z-index: 1000;
-        font-size: 24px;
-        font-weight: bold;
-        color: black;
-        text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
-    }
+  
     #searchContainer {
      display: flex;
      flex-direction: column;
@@ -88,23 +76,6 @@
 
     #searchContainer label {
      font-size: 12px;
-    }
-
-    #controlsContainer {
-        position: absolute;
-        top: 12px;
-        left: 50px;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.8);
-        width: 260px;
-        font-family: sans-serif;
-        font-size: 12px;
-        color: #333;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 8px;
-        border-radius: 6px;
     }
 
     /* constrain popup width */
@@ -181,22 +152,6 @@
         border-radius: 4px;
     }
 
-    #topBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1100;
-  background: linear-gradient(to right, #ffffff, #f4f9ff);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 12px 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
 #searchtitle {
   font-size: 14px;
   font-weight: bold;
@@ -205,27 +160,31 @@
 
 #reportTitle {
     position: relative;
-    z-index: 1200;
+    z-index: 2200;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 26px;
     font-weight: 800;
+    top: 10px;
     color: #2a4b7c;
-    background: linear-gradient(90deg, #eaf2fb 60%, #dbeafe 100%);
+    /* background: linear-gradient(90deg, #eaf2fb 60%, #dbeafe 100%);
     border-radius: 10px;
     box-shadow: 0 4px 16px rgba(42,75,124,0.10);
     text-shadow:
         0 2px 8px #fff,
         0 1px 0 #eaf1fa,
-        0 0.5px 0 #fff;
+        0 0.5px 0 #fff; */
     margin: 0 auto 18px auto;
     padding: 10px 32px 10px 18px;
-    min-height: 48px;
-    min-width: 340px;
-    max-width: 700px;
     gap: 14px;
+    flex: 1 1 auto; 
+    gap: 30px; 
+    flex-wrap: wrap; 
+    min-width: 200px; 
+    min-height: 48px;
+    padding-bottom: 10px;
 }
 #reportTitle::before {
     content: '';
@@ -243,7 +202,7 @@
   top: 0;
   left: 0;
   z-index: 1101;
-  background: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 70%, rgba(230, 245, 255, 0.85) 100%);
   width: auto;
   font-family: sans-serif;
   font-size: 12px;
@@ -255,8 +214,81 @@
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
+#topToolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, #f8fafc, #e3f0ff);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
 
+#topToolbar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2a4b7c;
+  margin: 0;
+  white-space: nowrap;
+}
 
+.jump-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.jump-buttons button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.report-cluster-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #2a4b7c;
+}
+
+.report-cluster-inline span {
+  font-weight: 800;
+  color: #007bff;
+  font-size: 1.2em;
+}
+
+#searchContainerInline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#searchContainerInline input[type="text"] {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#weekSelector {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid #b3c6e0;
+  border-radius: 5px;
+  background: #f7fbff;
+  color: #2a4b7c;
+  font-weight: 500;
+}
   </style>
   <style>
   .custom-icon {
@@ -266,65 +298,63 @@
   </style>
 </head>
 <body>
-    <div id="topBar">
-      <div id="reportTitle" style="flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; min-width: 0;">
-        <div style="font-size: 26px; font-weight: 800; flex-shrink: 0;">
-          Npop – Device Info Tracker
-        </div>
-      
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button id="jumpBtn1">
-            🔗 NPOP Heatmap
-          </button>
-      
-          <button id="jumpBtn2"
-            style=>
-            🔗 Capacity Dashboard
-          </button>
-        </div>
+  <div id="topToolbar">
+    <div id="reportTitle">
+      <div style="font-size: 33px; font-weight: 800; flex-shrink: 0; min-width: 150px;">
+        NPoP Devices Info
+      </div>
+    
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button id="jumpBtn1">
+          🔗 NPOP Heatmap
+        </button>
+    
+        <button id="jumpBtn2"
+          style=>
+          🔗 Capacity Dashboard
+        </button>
+      </div>
+    </div>
+    
+    
+  <div id="controlsContainer" style ="margin-top: 10px; min-width: 120px;">
+    <div id="searchContainer" style="z-index: 2200;">
+        <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" />
+        <datalist id="suggestions"></datalist>
+        <label><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
+        <label><input type="radio" name="searchMode" value="Address" /> Address</label>
+    </div>
+    </div>
+      <div id="reportBox1" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 90px; min-height: 60px; margin-top: 10px;">
+          <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
+              Device Count in City:
+              <br/>
+              <strong>
+                  <span id="npopCount" style="color: #007bff; font-size: 2em; font-weight: 800;">0</span>
+              </strong>
+          </div>
+      </div>
+      <div id="reportBox2" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;  min-width: 90px; min-height: 60px; margin-top: 10px;">
+          <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
+              Device Count at Address:
+              <br/>
+              <strong>
+                  <span id="deviceCount" style="color: #007bff; font-size: 2em; font-weight: 800;">0</span>
+              </strong>
+          </div>
       </div>
       
-      
-      
-      
-    <div id="controlsContainer">
-      <div id="searchContainer">
-          <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" />
-          <datalist id="suggestions"></datalist>
-          <label><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
-          <label><input type="radio" name="searchMode" value="Address" /> Address</label>
+      <div id="reportBox3" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 10px;">
+          <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
+              Filter by Weekly Usage
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+              <label for="weekSelector" style="font-size: 13px; color: #444; margin-right: 4px;">Week:</label>
+              <select id="weekSelector" style="padding: 4px 10px; font-size: 13px; border-radius: 5px; border: 1px solid #b3c6e0; background: #f7fbff; color: #2a4b7c; font-weight: 500; box-shadow: 0 1px 3px rgba(42,75,124,0.06);"></select>
+          </div>
+          <datalist id="filterList"></datalist>
       </div>
-      </div>
-        <div id="reportBox1" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 220px; min-height: 60px;">
-            <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
-                Device Count in City:
-                <br/>
-                <strong>
-                    <span id="npopCount" style="color: #007bff; font-size: 2em; font-weight: 800;">0</span>
-                </strong>
-            </div>
-        </div>
-        <div id="reportBox2" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 220px; min-height: 60px;">
-            <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
-                Device Count at Address:
-                <br/>
-                <strong>
-                    <span id="deviceCount" style="color: #007bff; font-size: 2em; font-weight: 800;">0</span>
-                </strong>
-            </div>
-        </div>
-        
-        <div id="reportBox3" class="reportCluster" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-            <div style="font-weight: 600; font-size: 15px; color: #2a4b7c; margin-bottom: 2px;">
-                Filter by Weekly Usage
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                <label for="weekSelector" style="font-size: 13px; color: #444; margin-right: 4px;">Week:</label>
-                <select id="weekSelector" style="padding: 4px 10px; font-size: 13px; border-radius: 5px; border: 1px solid #b3c6e0; background: #f7fbff; color: #2a4b7c; font-weight: 500; box-shadow: 0 1px 3px rgba(42,75,124,0.06);"></select>
-            </div>
-            <datalist id="filterList"></datalist>
-        </div>
-</div>
+  </div>
 <div id="map"></div>
 
   <!-- Leaflet -->

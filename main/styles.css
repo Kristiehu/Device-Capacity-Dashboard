@@ -219,3 +219,19 @@ html, body, #map {
   border-bottom: 1px solid #eee;
   padding-bottom: 4px;
 }
+
+#toolbar {
+    position: absolute;        /* Relative to #map container */
+    top: 12px;                 /* Distance from top of map */
+    right: 12px;               /* Distance from right edge of map */
+    z-index: 1001;             /* On top of base map, below title if needed */
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    align-items: center;
+  }
+  

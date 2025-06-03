@@ -26,49 +26,52 @@
 </head>
 <body> <!-- Leaflet Map -->
 
- <div id="topControls">
-    <div id="searchContainer" style="display:flex;flex-direction:column;gap:6px;min-width:200px;">
-      <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" style="padding:6px 10px;border:1px solid #ccc;border-radius:5px;" />
-      <datalist id="suggestions"></datalist>
-      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;">
-        <div style="display:flex;gap:10px;align-items:center;">
-          <label style="font-size:12px;"><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
-          <label style="font-size:12px;"><input type="radio" name="searchMode" value="Address" /> Address</label>
+<div id="topControls" style="position:relative;top:160px;left:50px;z-index:1200;width: 300px;">
+  <div id="searchContainer" style="display:flex;flex-direction:column;gap:6px;min-width:200px;">
+    <input type="text" id="searchInput" placeholder="Search device..." list="suggestions" style="padding:6px 10px;border:1px solid #ccc;border-radius:5px;" />
+    <datalist id="suggestions"></datalist>
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <label style="font-size:12px;"><input type="radio" name="searchMode" value="Device_Entity_ID" checked /> Entity ID</label>
+        <label style="font-size:12px;"><input type="radio" name="searchMode" value="Address" /> Address</label>
+      </div>
+      <button id="searchBtn" style="padding:4px 14px;font-size:13px;border-radius:5px;border:1px solid #1976d2;background:#2196f3;color:#fff;cursor:pointer;margin-left:auto;">Search</button>
+    </div>
+  </div>
+
+  <div style="padding: 12px;">
+    <div id="reportBox1" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px; min-width: 250px;">
+        <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count in City:<br/>
+            <strong><span id="npopCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
         </div>
-        <button id="searchBtn" style="padding:4px 14px;font-size:13px;border-radius:5px;border:1px solid #1976d2;background:#2196f3;color:#fff;cursor:pointer;margin-left:auto;">Search</button>
-      </div>
     </div>
+  </div>
 
-    <div style="padding: 12px;">
-      <div id="reportBox1" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
-          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count in City:<br/>
-              <strong><span id="npopCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
-          </div>
-      </div>
+  <div style="padding: 12px;">
+    <div id="reportBox2" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px; min-width: 250px">
+        <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count at Address:<br/>
+            <strong><span id="deviceCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
+        </div>
     </div>
+  </div>
 
-    <div style="padding: 12px;">
-      <div id="reportBox2" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
-          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Device Count at Address:<br/>
-              <strong><span id="deviceCount" style="color:#007bff;font-size:2em;font-weight:800;">0</span></strong>
-          </div>
-      </div>
+  <div style="padding: 12px;">
+    <div id="reportBox3" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px; min-width: 250px">
+        <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Filter by Weekly Usage</div>
+        <div style="display:flex;align-items:center;gap:8px;width:100%;">
+            <label for="weekSelector" style="font-size:13px;color:#444;">Week:</label>
+            <select id="weekSelector" style="padding:4px 10px;font-size:13px;border-radius:5px;border:1px solid #b3c6e0;background:#f7fbff;color:#2a4b7c;font-weight:500;box-shadow:0 1px 3px rgba(42,75,124,0.06);"></select>
+        </div>
+        <datalist id="filterList"></datalist>
     </div>
-
-    <div style="padding: 12px;">
-      <div id="reportBox3" class="reportCluster" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:220px;min-height:50px;">
-          <div style="font-weight:600;font-size:15px;color:#2a4b7c;">Filter by Weekly Usage</div>
-          <div style="display:flex;align-items:center;gap:8px;width:100%;">
-              <label for="weekSelector" style="font-size:13px;color:#444;">Week:</label>
-              <select id="weekSelector" style="padding:4px 10px;font-size:13px;border-radius:5px;border:1px solid #b3c6e0;background:#f7fbff;color:#2a4b7c;font-weight:500;box-shadow:0 1px 3px rgba(42,75,124,0.06);"></select>
-          </div>
-          <datalist id="filterList"></datalist>
-      </div>
-    </div>
+  </div>
+</div>
 </div>
   
-  <div id="map" style="position:absolute;top:0px;left:0;right:0;bottom:0;z-index:0;"></div>
-  <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 20px; background: linear-gradient(90deg, #f8fafc 60%, #e3f0ff 100%); padding: 12px 36px 12px 24px; border-radius: 14px; box-shadow: 0 4px 24px rgba(42,75,124,0.13), 0 1.5px 4px rgba(0,120,255,0.07); color: #1a2a4b; z-index: 1201; font-family: 'Segoe UI', Arial, sans-serif; letter-spacing: 0.2px; font-weight: 700; display: flex; align-items: center; gap: 14px; border: 1.5px solid #e0e7ef;">
+  <div id="map" style="position:absolute;top:150px;left:0;right:0;bottom:0;z-index:0;">
+
+  </div>
+  <div style="position: fixed; top: 0; left: 0; right: 0; z-index: 1200; background: linear-gradient(90deg, #e3f0ff 60%, #f8faff 100%); text-align: center; padding: 16px 0 12px 0; font-size: 24px; font-weight: bold; color: #1a237e; box-shadow: 0 4px 18px rgba(30,60,120,0.08); display: flex; flex-direction: column; align-items: center; gap: 8px;">
     <svg width="32" height="32" viewBox="0 0 32 32" style="vertical-align:middle">
       <g>
         <rect x="4" y="18" width="5" height="8" rx="2" fill="#2196f3"/>
@@ -77,12 +80,12 @@
         <circle cx="16" cy="16" r="15" fill="none" stroke="#1976d2" stroke-width="2"/>
       </g>
     </svg>
-    <span>
+    <span style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 34px; font-weight: 600; letter-spacing: 0.5px; color: #1a237e;">
       Interactive Device Capacity Reporting Dashboard
     </span>
     <div style="margin-top: 10px; display: flex; justify-content: center; gap: 10px;">
-      <button id="jumpBtn1" class="jumpBtn" title="Go to Page 1" style="padding: 6px 16px; font-size: 14px; background: #2196f3; color: #fff; border: none; border-radius: 6px; cursor: pointer;">🔗 NPOP Heatmap</button>
-      <button id="jumpBtn2" class="jumpBtn" title="Go to Page 2" style="padding: 6px 16px; font-size: 14px; background: #43a047; color: #fff; border: none; border-radius: 6px; cursor: pointer;">🔗 Device Info Tracker</button>
+      <button id="jumpBtn1" class="jumpBtn" title="Go to Page 1" >🔗 NPOP Heatmap</button>
+      <button id="jumpBtn2" class="jumpBtn" title="Go to Page 2" >🔗 Device Info Tracker</button>
     </div>
     
   </div>
@@ -92,6 +95,12 @@
   </script>
   
   </div>
+  
+  <script>
+    document.getElementById('jumpBtn1').onclick = () => { window.location.href = 'index.html'; };
+    document.getElementById('jumpBtn2').onclick = () => { window.location.href = 'devices_only.html'; };
+  </script>
+  
    
 
   <!-- Leaflet -->
