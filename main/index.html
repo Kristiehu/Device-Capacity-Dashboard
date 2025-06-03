@@ -15,54 +15,78 @@
       height: 100%;  /* Full-screen map */
       margin: 0;
       padding: 0;
-    }
-    .reportCluster {
-      background: linear-gradient(135deg, rgba(255,255,255,0.95) 70%, rgba(230,245,255,0.85) 100%);
-      padding: 10px 14px;
-      border-radius: 8px;
       font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 12px;
-      color: #222;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
-      border: 1px solid #e0e7ef;
-      position: relative;
-      z-index: 1000;
-      transition: box-shadow 0.2s, border 0.2s;
     }
+    #reportTitle {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1200;
+      background: linear-gradient(90deg, #e3f0ff 60%, #f8faff 100%);
+      text-align: center;
+      padding: 22px 0 14px 0;
+      font-size: 2.7rem;
+      font-weight: 800;
+      color: #18306b;
+      letter-spacing: 1.5px;
+      text-shadow: 0 2px 8px rgba(30,60,120,0.08), 0 1px 0 #fff;
+      border-bottom: 2.5px solid #b3d4fc;
+      border-radius: 0 0 18px 18px;
+      box-shadow: 0 6px 24px rgba(30,60,120,0.10);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      transition: box-shadow 0.2s;
+    }
+    #reportTitle button {
+      margin: 8px 5px 0;
+    }
+
+    .reportCluster {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 70%, rgba(230,245,255,0.85) 100%);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 12px;
+    color: #222;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), 0 1.5px 4px rgba(0, 120, 255, 0.07);
+    border: 1px solid #e0e7ef;
+    z-index: 1000;
+    max-width: 260px;
+    }
+
     .reportCluster:hover {
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 120, 255, 0.10);
       border: 1.5px solid #b3d4fc;
     }
     
-    #reportTitle {
-      box-sizing: content-box;
-      position: absolute;
-      top: 10px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      z-index: 1000;
-      font-size: 24px;
-      font-weight: bold;
-      color: black;
-      text-shadow:
-        -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white,
-        -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
-    }
-    #controlsContainer {
-      position: absolute;
-      top: 12px;
-      left: 50px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.8);
-      width: 250px;
-      font-family: sans-serif;
-      font-size: 12px;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .report-fixed {
+    position: absolute;
+    margin: 0;
+  }
+
+  #fsaReport {
+    top: 110px;
+    right: 10px;
+  }
+
+  #bldgReport {
+    top: 190px;
+    right: 10px;
+  }
+
+  #controlsContainer {
+    position: absolute;
+    top: 110px;
+    left: 10px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px;
+    border-radius: 8px; 
+    border: 1px solid #ccc;
+  }
     #filterContainer {
       display: flex;
       align-items: center;
@@ -91,21 +115,32 @@
     #clearBtn:hover {
       background: #ccc;
     }
+    #mapContainer {
+      position: absolute;
+      top: 132px; /* exact height of #reportTitle padding + line height */
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 
 <body>
-  <div id="reportTitle">Npop Count & Distribution Report
-    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 8px;">
-      <button id="jumpBtn1" title="Go to Page 1" class="jumpBtn">🔗 Capacity Dashboard</button>
-      <button id="jumpBtn2" title="Go to Page 2" class="jumpBtn">🔗 Device Info Tracker </button>
-    </div>
-    </div>
+  <div id="reportTitle">
+    Npop Count & Distribution Report<br/>
+    <button id="jumpBtn1">🔗 Capacity Dashboard</button>
+    <button id="jumpBtn2">🔗 Device Info Tracker</button>
+  </div>
     <script>
       document.getElementById('jumpBtn1').onclick = () => { window.location.href = 'capacityReport.html'; };
       document.getElementById('jumpBtn2').onclick = () => { window.location.href = 'devices_only.html'; };
     </script></div>
-  <div id="controlsContainer">
-    <div id="reportBox" class="reportCluster">
+  <div id="controlsContainer" style="left: 50px; position: absolute; top: 142px;">
+    <div id="reportBox" class="reportCluster" >
       Showing total npop count by city: <strong><span id="npopCount">0</span></strong>
     </div>
     <div id="filterContainer">
@@ -114,9 +149,8 @@
     </div>
     <datalist id="filterList"></datalist>
   </div>
-  <div id="map"></div>
-  <div style="position: absolute; bottom: 10px; left: 10px; font-size: 15px; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; z-index: 1000;">
-    <em>A sample interactive map by <strong>Kristie Hu</strong></em>
+  <div id="mapContainer">
+    <div id="map"></div>
   </div>
 
   <!-- External JS libraries -->
