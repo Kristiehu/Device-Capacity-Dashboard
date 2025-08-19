@@ -7,9 +7,9 @@ Includes additional dashboards for device capacity reporting and device informat
 
 ## 🌍 Live Applications
 
-- **[NPOP Map](https://kristiehu.github.io/Device-Capacity-Dashboard/main/capacityReport.html)**  
+- **[NPOP Heatmap](https://kristiehu.github.io/Device-Capacity-Dashboard/main/index.html)**  
   Explore clustered markers, heatmaps, and FSA overlays.  
-  [![NPOP Map Preview](https://raw.githubusercontent.com/kristiehu/Leaflet-Npop-Map/main/Npop_heatmap_preview.png)](https://kristiehu.github.io/Leaflet-Npop-Map/main)
+  [![NPOP Map Preview](https://raw.githubusercontent.com/kristiehu/Leaflet-Npop-Map/main/Npop_heatmap_preview.png)](https://kristiehu.github.io/Leaflet-Npop-Map/main/index.html)
 
 - **[Device Capacity Reporting Dashboard](https://kristiehu.github.io/Device-Capacity-Dashboard/main/capacityReport.html)**  
   Visualize port and capacity usage across devices.  
