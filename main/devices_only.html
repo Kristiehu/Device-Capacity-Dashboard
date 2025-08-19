@@ -481,7 +481,7 @@
   window.npopLayer = L.layerGroup().addTo(map);
 
   // Load Excel & prepare weeks
-  fetch('data/capacity/Core_Capacity_Summary.xlsx').then(r=>r.arrayBuffer()).then(ab=>{
+  fetch('data/capacity/capacity_summary.xlsx').then(r=>r.arrayBuffer()).then(ab=>{
     const wb = XLSX.read(ab,{type:'array'});
     rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
     searchData.Device_Entity_ID = [...new Set(rows.map(r => r.Device_Entity_ID).filter(Boolean))].sort();
