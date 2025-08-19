@@ -1075,7 +1075,7 @@ function drawAddressSummary() {
   }
 
   // Load Excel data and populate searchData
-  fetch('data/capacity/capacity_summary.xlsx')
+  fetch('data/capacity/Core_Capacity_Summary.xlsx')
     .then(r => r.arrayBuffer())
     .then(ab => {
       const wb = XLSX.read(ab, { type: 'array' });
